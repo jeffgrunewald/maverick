@@ -1,15 +1,15 @@
-defmodule Goose do
+defmodule Maverick do
   @moduledoc false
 
   defmacro __using__(opts) do
     scope = Keyword.get(opts, :scope, "") |> String.split("/")
 
     quote do
-      Module.register_attribute(__MODULE__, :goose_routes, accumulate: true)
-      Module.put_attribute(__MODULE__, :goose_route_scope, unquote(scope))
+      Module.register_attribute(__MODULE__, :maverick_routes, accumulate: true)
+      Module.put_attribute(__MODULE__, :maverick_route_scope, unquote(scope))
 
-      @on_definition Goose
-      @before_compile Goose
+      @on_definition Maverick
+      @before_compile Maverick
     end
   end
 
@@ -17,8 +17,11 @@ defmodule Goose do
     route_info = Module.get_attribute(module, :route) || :no_route
 
     unless route_info == :no_route do
-      scope = Module.get_attribute(module, :goose_route_scope)
+      scope = Module.get_attribute(module, :maverick_route_scope)
       path = Keyword.fetch!(route_info, :path) |> String.split("/")
+      arg_type = Keyword.get(route_info, :args, :params)
+      success_code = Keyword.get(route_info, :success, 200) |> parse_http_code()
+      error_code = Keyword.get(route_info, :error, 404) |> parse_http_code()
 
       method =
         route_info
@@ -26,14 +29,15 @@ defmodule Goose do
         |> to_string()
         |> String.upcase()
 
-      Module.put_attribute(module, :goose_routes, %{
+      Module.put_attribute(module, :maverick_routes, %{
         module: module,
         function: name,
-        argc: length(args),
-        argv: Enum.map(args, fn {name, _, _} -> to_string(name) end),
+        arity: length(args),
+        args: arg_type,
         method: method,
         path: (scope ++ path) |> Enum.filter(fn item -> item != "" end),
-        opts: Keyword.get(route_info, :opts, [])
+        success_code: success_code,
+        error_code: error_code
       })
     end
 
@@ -49,8 +53,8 @@ defmodule Goose do
   end
 
   defmacro __before_compile__(env) do
-    routes = Module.get_attribute(env.module, :goose_routes, [])
-    Module.delete_attribute(env.module, :goose_routes)
+    routes = Module.get_attribute(env.module, :maverick_routes, [])
+    Module.delete_attribute(env.module, :maverick_routes)
 
     contents =
       Enum.map(routes, fn route ->
@@ -58,7 +62,7 @@ defmodule Goose do
       end)
 
     env.module
-    |> Module.concat(Goose.Routes)
+    |> Module.concat(Maverick.Routes)
     |> Module.create(contents, Macro.Env.location(__ENV__))
 
     []
@@ -70,13 +74,21 @@ defmodule Goose do
         %{
           module: unquote(route.module),
           function: unquote(route.function),
-          argc: unquote(route.argc),
-          argv: unquote(route.argv),
+          arity: unquote(route.arity),
+          args: unquote(route.args),
           method: unquote(route.method),
           path: unquote(route.path),
-          opts: unquote(route.opts)
+          success_code: unquote(route.success_code),
+          error_code: unquote(route.error_code)
         }
       end
     end
+  end
+
+  defp parse_http_code(code) when is_integer(code), do: code
+
+  defp parse_http_code(code) when is_binary(code) do
+    {code, _} = Integer.parse(code)
+    code
   end
 end

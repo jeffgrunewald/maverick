@@ -1,13 +1,13 @@
-defmodule Goose.MixProject do
+defmodule Maverick.MixProject do
   use Mix.Project
 
-  @name "Goose"
+  @name "Maverick"
   @version "0.1.0"
-  @repo "https://github.com/jeffgrunewald/goose"
+  @repo "https://github.com/jeffgrunewald/maverick"
 
   def project do
     [
-      app: :goose,
+      app: :maverick,
       name: @name,
       version: @version,
       elixir: "~> 1.10",
@@ -30,7 +30,8 @@ defmodule Goose.MixProject do
   defp deps do
     [
       {:elli, "~> 3.3"},
-      {:jason, "~> 1.2"}
+      {:jason, "~> 1.2"},
+      {:nimble_parsec, "~> 1.1", optional: true}
     ]
   end
 
