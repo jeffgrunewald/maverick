@@ -41,7 +41,7 @@ defmodule Maverick.Request do
       ) do
     body_params = body |> Jason.decode!()
     query_params = args |> Enum.into(%{})
-    params = path_params |> Map.merge(query_parmas) |> Map.merge(body_params)
+    params = path_params |> Map.merge(query_params) |> Map.merge(body_params)
 
     %__MODULE__{
       body: body,
