@@ -2,7 +2,7 @@ defmodule Maverick do
   @moduledoc false
 
   defmacro __using__(opts) do
-    scope = Keyword.get(opts, :scope, "") |> String.split("/")
+    scope = Keyword.get(opts, :scope, "")
 
     quote do
       Module.register_attribute(__MODULE__, :maverick_routes, accumulate: true)
@@ -18,7 +18,7 @@ defmodule Maverick do
 
     unless route_info == :no_route do
       scope = Module.get_attribute(module, :maverick_route_scope)
-      path = Keyword.fetch!(route_info, :path) |> String.split("/")
+      path = Keyword.fetch!(route_info, :path)
       arg_type = Keyword.get(route_info, :args, :params)
       success_code = Keyword.get(route_info, :success, 200) |> parse_http_code()
       error_code = Keyword.get(route_info, :error, 404) |> parse_http_code()
@@ -29,13 +29,17 @@ defmodule Maverick do
         |> to_string()
         |> String.upcase()
 
+      {:ok, path, "", %{}, _, _} =
+        ensure_leading_slash(scope) <> ensure_leading_slash(path)
+        |> Maverick.PathParser.parse
+
       Module.put_attribute(module, :maverick_routes, %{
         module: module,
         function: name,
         arity: length(args),
         args: arg_type,
         method: method,
-        path: (scope ++ path) |> Enum.filter(fn item -> item != "" end),
+        path: path,
         success_code: success_code,
         error_code: error_code
       })
@@ -57,32 +61,17 @@ defmodule Maverick do
     Module.delete_attribute(env.module, :maverick_routes)
 
     contents =
-      Enum.map(routes, fn route ->
-        gen_route_function(route)
-      end)
+      quote do
+        def routes() do
+          unquote(Macro.escape(routes))
+        end
+      end
 
     env.module
-    |> Module.concat(Maverick.Routes)
+    |> Module.concat(Maverick.Router)
     |> Module.create(contents, Macro.Env.location(__ENV__))
 
     []
-  end
-
-  defp gen_route_function(route) do
-    quote do
-      def unquote(route.function)() do
-        %{
-          module: unquote(route.module),
-          function: unquote(route.function),
-          arity: unquote(route.arity),
-          args: unquote(route.args),
-          method: unquote(route.method),
-          path: unquote(route.path),
-          success_code: unquote(route.success_code),
-          error_code: unquote(route.error_code)
-        }
-      end
-    end
   end
 
   defp parse_http_code(code) when is_integer(code), do: code
@@ -91,4 +80,7 @@ defmodule Maverick do
     {code, _} = Integer.parse(code)
     code
   end
+
+  defp ensure_leading_slash("/" <> _rest = string), do: string
+  defp ensure_leading_slash(path), do: "/" <> path
 end

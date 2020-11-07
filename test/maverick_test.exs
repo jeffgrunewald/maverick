@@ -12,8 +12,8 @@ defmodule MaverickTest do
 
     def interpolate(arg), do: "The cat sat on the #{arg}"
 
-    @route path: "hello", method: :get
-    def hello(), do: :world
+    @route path: "hello/:name", method: :get
+    def hello(name), do: name
 
     defmacro upcase(string) do
       quote do
@@ -23,7 +23,7 @@ defmodule MaverickTest do
   end
 
   test "creates getters for annotated public functions" do
-    assert Example.Maverick.Routes.multiply() == %{
+    assert %{
              module: MaverickTest.Example,
              function: :multiply,
              arity: 2,
@@ -32,28 +32,29 @@ defmodule MaverickTest do
              args: :required_params,
              error_code: 403,
              success_code: 200
-           }
+           } in Example.Maverick.Router.routes()
 
-    assert Example.Maverick.Routes.hello() == %{
+    assert %{
              module: MaverickTest.Example,
              function: :hello,
-             arity: 0,
+             arity: 1,
              method: "GET",
-             path: ["api", "v1", "hello"],
+             path: ["api", "v1", "hello", {:variable, "name"}],
              args: :params,
              error_code: 404,
              success_code: 200
-           }
+           } in Example.Maverick.Router.routes()
   end
 
   test "ignores invalid or unannotated functions" do
-    route_functions = Example.Maverick.Routes.__info__(:functions)
+    route_functions = Example.Maverick.Router.routes()
 
-    assert Enum.member?(route_functions, {:hello, 0})
-    assert Enum.member?(route_functions, {:multiply, 0})
+    refute function_member(route_functions, :double)
+    refute function_member(route_functions, :interpolate)
+    refute function_member(route_functions, :upcase)
+  end
 
-    refute Enum.member?(route_functions, {:double, 0})
-    refute Enum.member?(route_functions, {:interpolate, 0})
-    refute Enum.member?(route_functions, {:upcase, 0})
+  defp function_member(routes, function) do
+    Enum.any?(routes, fn %{function: func} -> func == function end)
   end
 end
