@@ -1,4 +1,6 @@
 defmodule Maverick.PathParser do
+  @moduledoc false
+
   import NimbleParsec
 
   url_file_safe_alphabet = [?A..?z, ?0..?9, ?-, ?_]
