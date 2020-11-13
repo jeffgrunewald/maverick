@@ -1,15 +1,23 @@
 defmodule Maverick.Test1 do
   use Maverick, scope: "/api/v1"
 
-  @route path: "multiply", args: :required_params, error: 403
-  def multiply(num1, num2), do: num1 * num2
+  @route path: "multiply", args: [required_params: [:num1, :num2]], error: 403
+  def multiply(%{"num1" => num1, "num2" => num2}), do: %{product: num1 * num2}
 
   @route path: "hello/:name", method: :get
-  def hello(name), do: name
+  def hello(%{"name" => name}), do: "Hi there " <> name
 
-  @route path: "fly/to/the/moon", args: :request
-  def foobar(num1), do: num1 * 3
+  @route path: "fly/me/to/the", args: :request
+  def come_fly_with_me(req) do
+    destination = Enum.random(["moon", "mars", "stars"])
 
-  @route path: "boobah/:id/clock", method: :put
-  def barbaz(), do: :name
+    response_header = Map.get(req.headers, "Customer-Name", "Anonymous")
+
+    {:ok, response_header, %{"destination" => destination}}
+  end
+
+  @route path: "clock/:timezone", method: :put
+  def current_time(%{"timezone" => timezone}) do
+    DateTime.now(timezone)
+  end
 end
