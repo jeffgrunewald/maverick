@@ -61,7 +61,6 @@ defmodule Maverick.Api.Initializer do
         end
       end
 
-    Macro.to_string(contents) |> IO.puts()
     quote bind_quoted: [contents: contents], do: contents
   end
 
@@ -99,14 +98,17 @@ defmodule Maverick.Api.Initializer do
   end
 
   defp path_var_map(path) do
-    Enum.reduce(path, %{}, fn element, acc ->
-      case element do
-        {:variable, variable} ->
-          value = variable |> String.to_atom() |> Macro.var(__MODULE__)
-          Map.put(acc, variable, value)
-        _ ->
-          acc
-      end
-    end)
+    entries =
+      Enum.reduce(path, [], fn element, acc ->
+        case element do
+          {:variable, variable} ->
+            value = variable |> String.to_atom() |> Macro.var(__MODULE__)
+            [{variable, value} | acc]
+          _ ->
+            acc
+        end
+      end)
+
+    {:%{}, [], entries}
   end
 end
