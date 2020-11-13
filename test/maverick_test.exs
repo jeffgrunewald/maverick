@@ -1,57 +1,55 @@
 defmodule MaverickTest do
   use ExUnit.Case
 
-  defmodule Example do
-    use Maverick, scope: "/api/v1"
-
-    @route path: "multiply", args: :required_params, error: 403
-    def multiply(num1, num2), do: double(num1 * num2)
-
-    @route path: "wrong"
-    defp double(num), do: num * 2
-
-    def interpolate(arg), do: "The cat sat on the #{arg}"
-
-    @route path: "hello/:name", method: :get
-    def hello(name), do: name
-
-    defmacro upcase(string) do
-      quote do
-        String.upcase(unquote(string))
-      end
-    end
-  end
-
   test "creates getters for annotated public functions" do
     assert %{
-             module: MaverickTest.Example,
+             module: Maverick.TestRoute1,
              function: :multiply,
-             arity: 2,
              method: "POST",
              path: ["api", "v1", "multiply"],
-             args: :required_params,
+             args: {:required_params, ["num1", "num2"]},
              error_code: 403,
              success_code: 200
-           } in Example.Maverick.Router.routes()
+           } in Maverick.TestRoute1.Maverick.Router.routes()
 
     assert %{
-             module: MaverickTest.Example,
+             module: Maverick.TestRoute1,
              function: :hello,
-             arity: 1,
              method: "GET",
              path: ["api", "v1", "hello", {:variable, "name"}],
              args: :params,
              error_code: 404,
              success_code: 200
-           } in Example.Maverick.Router.routes()
+           } in Maverick.TestRoute1.Maverick.Router.routes()
+
+    assert %{
+             module: Maverick.TestRoute2,
+             function: :come_fly_with_me,
+             method: "POST",
+             path: ["api", "v1", "fly", "me", "to", "the"],
+             args: :request,
+             error_code: 404,
+             success_code: 200
+           } in Maverick.TestRoute2.Maverick.Router.routes()
+
+    assert %{
+             module: Maverick.TestRoute2,
+             function: :current_time,
+             method: "PUT",
+             path: ["api", "v1", "clock", {:variable, "timezone"}],
+             args: :params,
+             error_code: 404,
+             success_code: 200
+           } in Maverick.TestRoute2.Maverick.Router.routes()
   end
 
   test "ignores invalid or unannotated functions" do
-    route_functions = Example.Maverick.Router.routes()
+    route1_functions = Maverick.TestRoute1.Maverick.Router.routes()
+    route2_functions = Maverick.TestRoute2.Maverick.Router.routes()
 
-    refute function_member(route_functions, :double)
-    refute function_member(route_functions, :interpolate)
-    refute function_member(route_functions, :upcase)
+    refute function_member(route1_functions, :double)
+    refute function_member(route1_functions, :interpolate)
+    refute function_member(route2_functions, :upcase)
   end
 
   defp function_member(routes, function) do

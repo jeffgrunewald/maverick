@@ -35,9 +35,9 @@ defmodule Maverick.PathParserTest do
 
   test "errors on invalid characters" do
     assert {:error, "expected only legal characters", _, %{}, _, _} =
-      Maverick.PathParser.parse("/api/v?/foo")
+             Maverick.PathParser.parse("/api/v?/foo")
 
     assert {:error, "expected only legal characters", _, %{}, _, _} =
-      Maverick.PathParser.parse("/users/:user-id")
+             Maverick.PathParser.parse("/users/:user-id")
   end
 end

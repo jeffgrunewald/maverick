@@ -13,13 +13,13 @@ defmodule Maverick do
     end
   end
 
-  def __on_definition__(%Macro.Env{module: module}, :def, name, args, _guards, _body) do
+  def __on_definition__(%Macro.Env{module: module}, :def, name, _args, _guards, _body) do
     route_info = Module.get_attribute(module, :route) || :no_route
 
     unless route_info == :no_route do
       scope = Module.get_attribute(module, :maverick_route_scope)
       path = Keyword.fetch!(route_info, :path)
-      arg_type = Keyword.get(route_info, :args, :params)
+      arg_type = Keyword.get(route_info, :args, :params) |> validate_arg_type()
       success_code = Keyword.get(route_info, :success, 200) |> parse_http_code()
       error_code = Keyword.get(route_info, :error, 404) |> parse_http_code()
 
@@ -30,13 +30,12 @@ defmodule Maverick do
         |> String.upcase()
 
       {:ok, path, "", %{}, _, _} =
-        ensure_leading_slash(scope) <> ensure_leading_slash(path)
-        |> Maverick.PathParser.parse
+        (ensure_leading_slash(scope) <> ensure_leading_slash(path))
+        |> Maverick.PathParser.parse()
 
       Module.put_attribute(module, :maverick_routes, %{
         module: module,
         function: name,
-        arity: length(args),
         args: arg_type,
         method: method,
         path: path,
@@ -83,4 +82,10 @@ defmodule Maverick do
 
   defp ensure_leading_slash("/" <> _rest = string), do: string
   defp ensure_leading_slash(path), do: "/" <> path
+
+  defp validate_arg_type({:required_params, list}),
+    do: {:required_params, Enum.map(list, &to_string/1)}
+
+  defp validate_arg_type(:params), do: :params
+  defp validate_arg_type(:request), do: :request
 end

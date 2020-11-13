@@ -91,6 +91,7 @@ defmodule Maverick.Api.Initializer do
           variable
           |> String.to_atom()
           |> Macro.var(__MODULE__)
+
         _ ->
           element
       end
@@ -104,6 +105,7 @@ defmodule Maverick.Api.Initializer do
           {:variable, variable} ->
             value = variable |> String.to_atom() |> Macro.var(__MODULE__)
             [{variable, value} | acc]
+
           _ ->
             acc
         end
