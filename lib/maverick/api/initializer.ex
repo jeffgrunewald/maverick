@@ -48,10 +48,16 @@ defmodule Maverick.Api.Initializer do
 
   defp generate_handler_functions(app) do
     contents =
-      for %{function: function, method: method, path: path} <- get_routes(app) do
+      for %{function: function, method: method, module: module, path: path} <- get_routes(app) do
         req_var = Macro.var(:req, __MODULE__)
+        path_var = variablize_path(path)
+        path_var_map = path_var_map(path)
+
         quote do
-          def handle(unquote(method), unquote(path), unquote(req_var)), do: unquote(function)
+          def handle(unquote(method), unquote(path_var), unquote(req_var)) do
+            req = Maverick.Request.new(unquote(req_var), unquote(path_var_map))
+            apply(unquote(module), unquote(function), [req])
+          end
         end
       end
 
@@ -76,5 +82,33 @@ defmodule Maverick.Api.Initializer do
     Enum.reduce(modules, [], fn module, acc ->
       acc ++ apply(module, :routes, [])
     end)
+  end
+
+  defp variablize_path(path) do
+    Enum.map(path, fn element ->
+      case element do
+        {:variable, variable} ->
+          variable
+          |> String.to_atom()
+          |> Macro.var(__MODULE__)
+        _ ->
+          element
+      end
+    end)
+  end
+
+  defp path_var_map(path) do
+    entries =
+      Enum.reduce(path, [], fn element, acc ->
+        case element do
+          {:variable, variable} ->
+            value = variable |> String.to_atom() |> Macro.var(__MODULE__)
+            [{variable, value} | acc]
+          _ ->
+            acc
+        end
+      end)
+
+    {:%{}, [], entries}
   end
 end

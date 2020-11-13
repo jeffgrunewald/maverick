@@ -16,6 +16,7 @@ defmodule Maverick.MixProject do
       source_url: @repo,
       package: package(),
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       docs: docs()
     ]
@@ -34,6 +35,9 @@ defmodule Maverick.MixProject do
       {:nimble_parsec, "~> 1.1", optional: true}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp package do
     %{
