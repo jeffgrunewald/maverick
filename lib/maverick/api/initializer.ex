@@ -3,11 +3,10 @@ defmodule Maverick.Api.Initializer do
 
   use GenServer, restart: :transient
 
-  def start_link({api, opts}) do
+  def start_link({api, otp_app, opts}) do
     name = Keyword.get(opts, :init_name, Module.concat(api, Initializer))
-    app = Keyword.fetch!(opts, :otp_app)
 
-    GenServer.start_link(__MODULE__, {api, app}, name: name)
+    GenServer.start_link(__MODULE__, {api, otp_app}, name: name)
   end
 
   @impl true
@@ -23,8 +22,8 @@ defmodule Maverick.Api.Initializer do
     {:stop, :normal, state}
   end
 
-  defp build_handler_module({api, app}) do
-    handler_functions = generate_handler_functions(app)
+  defp build_handler_module({api, otp_app}) do
+    handler_functions = generate_handler_functions(otp_app)
 
     contents =
       quote location: :keep do
