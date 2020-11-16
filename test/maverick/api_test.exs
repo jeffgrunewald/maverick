@@ -25,6 +25,7 @@ defmodule Maverick.ApiTest do
         mod
         |> to_string()
         |> String.to_existing_atom()
+
       {mod, loaded}
     end)
   end

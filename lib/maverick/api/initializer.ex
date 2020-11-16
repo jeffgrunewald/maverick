@@ -36,6 +36,43 @@ defmodule Maverick.Api.Initializer do
         unquote(handler_functions)
 
         def handle_event(_event, _data, _args), do: :ok
+
+        defp wrap_response({code, headers, response} = resp, _, _)
+             when is_integer(code) and is_list(headers) and is_binary(response),
+             do: resp
+
+        defp wrap_response({:ok, headers, response}, success, _)
+             when is_list(headers) and is_binary(response),
+             do: {success, headers, response}
+
+        defp wrap_response({code, headers, response}, _, _)
+             when is_integer(code) and is_list(headers),
+             do: {code, headers, Jason.encode!(response)}
+
+        defp wrap_response({:ok, headers, response}, success, _)
+             when is_list(headers),
+             do: {success, headers, Jason.encode!(response)}
+
+        defp wrap_response({:ok, response}, success, _)
+             when is_binary(response),
+             do: {success, [], response}
+
+        defp wrap_response({:ok, response}, success, _),
+          do: {success, [], Jason.encode!(response)}
+
+        defp wrap_response({:error, response}, _, error)
+             when is_binary(response),
+             do: {error, [], response}
+
+        defp wrap_response({:error, response}, _, error),
+          do: {error, [], Jason.encode!(response)}
+
+        defp wrap_response(response, success, _)
+             when is_binary(response),
+             do: {success, [], response}
+
+        defp wrap_response(response, success, _),
+          do: {success, [], Jason.encode!(response)}
       end
 
     api
@@ -47,20 +84,33 @@ defmodule Maverick.Api.Initializer do
 
   defp generate_handler_functions(app) do
     contents =
-      for %{function: function, method: method, module: module, path: path} <- get_routes(app) do
+      for %{
+            args: arg_type,
+            function: function,
+            method: method,
+            module: module,
+            path: path,
+            success_code: success,
+            error_code: error
+          } <-
+            get_routes(app) do
         req_var = Macro.var(:req, __MODULE__)
         path_var = variablize_path(path)
         path_var_map = path_var_map(path)
 
-        quote do
+        quote location: :keep do
           def handle(unquote(method), unquote(path_var), unquote(req_var)) do
             req = Maverick.Request.new(unquote(req_var), unquote(path_var_map))
-            apply(unquote(module), unquote(function), [req])
+            args = Maverick.Request.args(req, unquote(arg_type))
+
+            unquote(module)
+            |> apply(unquote(function), [args])
+            |> wrap_response(unquote(success), unquote(error))
           end
         end
       end
 
-    quote bind_quoted: [contents: contents], do: contents
+    quote location: :keep, bind_quoted: [contents: contents], do: contents
   end
 
   defp get_routes(app) do

@@ -62,6 +62,12 @@ defmodule Maverick.Request do
     }
   end
 
+  def args(%__MODULE__{params: params}, {:required_params, required}),
+    do: Map.take(params, required)
+
+  def args(%__MODULE__{params: params}, :params), do: params
+  def args(%__MODULE__{} = req, :request), do: req
+
   defp peer_ip(socket) do
     case :elli_tcp.peername(socket) do
       {:ok, {address, _port}} -> address
