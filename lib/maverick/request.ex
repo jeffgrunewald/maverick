@@ -72,12 +72,6 @@ defmodule Maverick.Request do
     }
   end
 
-  def args(%__MODULE__{params: params}, {:required_params, required}),
-    do: Map.take(params, required)
-
-  def args(%__MODULE__{params: params}, :params), do: params
-  def args(%__MODULE__{} = req, :request), do: req
-
   defp decode_body(""), do: {:ok, %{}}
 
   defp decode_body(body) do
