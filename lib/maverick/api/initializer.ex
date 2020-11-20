@@ -29,50 +29,64 @@ defmodule Maverick.Api.Initializer do
       quote location: :keep do
         @behaviour :elli_handler
 
+        require Logger
+
+        @content_type {"Content-Type", "application/json"}
+
         def handle(request, _args) do
-          handle(:elli_request.method(request), :elli_request.path(request), request)
+          handle(:elli_request.method(request) |> to_string(), :elli_request.path(request), request)
         end
 
         unquote(handler_functions)
 
+        def handle(method, path, req) do
+          Logger.warn("Unhandled request received : #{inspect(req)}")
+          :ignore
+        end
+
         def handle_event(_event, _data, _args), do: :ok
 
-        defp wrap_response({code, headers, response} = resp, _, _)
-             when is_integer(code) and is_list(headers) and is_binary(response),
-             do: resp
+        defp wrap_response({code, headers, response}, _, _)
+             when is_integer(code) and is_binary(response),
+             do: {code, wrap_headers(headers), response}
 
         defp wrap_response({:ok, headers, response}, success, _)
-             when is_list(headers) and is_binary(response),
-             do: {success, headers, response}
+             when is_binary(response),
+             do: {success, wrap_headers(headers), response}
 
         defp wrap_response({code, headers, response}, _, _)
-             when is_integer(code) and is_list(headers),
-             do: {code, headers, Jason.encode!(response)}
+             when is_integer(code),
+             do: {code, wrap_headers(headers), Jason.encode!(response)}
 
-        defp wrap_response({:ok, headers, response}, success, _)
-             when is_list(headers),
-             do: {success, headers, Jason.encode!(response)}
+        defp wrap_response({:ok, headers, response}, success, _),
+             do: {success, wrap_headers(headers), Jason.encode!(response)}
 
         defp wrap_response({:ok, response}, success, _)
              when is_binary(response),
-             do: {success, [], response}
+             do: {success, [@content_type], response}
 
         defp wrap_response({:ok, response}, success, _),
-          do: {success, [], Jason.encode!(response)}
+          do: {success, [@content_type], Jason.encode!(response)}
 
         defp wrap_response({:error, response}, _, error)
              when is_binary(response),
-             do: {error, [], response}
+             do: {error, [@content_type], response}
 
         defp wrap_response({:error, response}, _, error),
-          do: {error, [], Jason.encode!(response)}
+          do: {error, [@content_type], Jason.encode!(response)}
 
         defp wrap_response(response, success, _)
              when is_binary(response),
-             do: {success, [], response}
+             do: {success, [@content_type], response}
 
         defp wrap_response(response, success, _),
-          do: {success, [], Jason.encode!(response)}
+          do: {success, [@content_type], Jason.encode!(response)}
+
+        defp wrap_headers(headers) do
+          [@content_type | headers
+          |> Map.drop(["Content-Type", "content-type"])
+          |> Enum.into([]) ]
+        end
       end
 
     api
@@ -100,12 +114,16 @@ defmodule Maverick.Api.Initializer do
 
         quote location: :keep do
           def handle(unquote(method), unquote(path_var), unquote(req_var)) do
-            req = Maverick.Request.new(unquote(req_var), unquote(path_var_map))
-            args = Maverick.Request.args(req, unquote(arg_type))
+            case Maverick.Request.new(unquote(req_var), unquote(path_var_map)) do
+              %Maverick.Request{} = req ->
+                args = Maverick.Request.args(req, unquote(arg_type))
 
-            unquote(module)
-            |> apply(unquote(function), [args])
-            |> wrap_response(unquote(success), unquote(error))
+                unquote(module)
+                |> apply(unquote(function), [args])
+                |> wrap_response(unquote(success), unquote(error))
+              {:error, reason} ->
+                {400, [@content_type], reason}
+            end
           end
         end
       end

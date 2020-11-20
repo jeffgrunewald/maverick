@@ -32,7 +32,8 @@ defmodule Maverick.MixProject do
     [
       {:elli, "~> 3.3"},
       {:jason, "~> 1.2"},
-      {:nimble_parsec, "~> 1.1", optional: true}
+      {:nimble_parsec, "~> 1.1", optional: true},
+      {:hackney, "~> 1.16", only: :test}
     ]
   end
 
