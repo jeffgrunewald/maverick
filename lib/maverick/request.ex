@@ -27,6 +27,7 @@ defmodule Maverick.Request do
     case decode_body(body) do
       {:ok, body_params} ->
         new(request, body_params, path_params)
+
       error ->
         error
     end
@@ -48,7 +49,7 @@ defmodule Maverick.Request do
         ),
         body_params,
         path_params
-  ) do
+      ) do
     query_params = args |> Enum.into(%{})
     params = path_params |> Map.merge(query_params) |> Map.merge(body_params)
 
@@ -78,6 +79,7 @@ defmodule Maverick.Request do
   def args(%__MODULE__{} = req, :request), do: req
 
   defp decode_body(""), do: {:ok, %{}}
+
   defp decode_body(body) do
     case Jason.decode(body) do
       {:ok, json} when is_map(json) -> {:ok, json}

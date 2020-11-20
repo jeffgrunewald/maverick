@@ -34,7 +34,11 @@ defmodule Maverick.Api.Initializer do
         @content_type {"Content-Type", "application/json"}
 
         def handle(request, _args) do
-          handle(:elli_request.method(request) |> to_string(), :elli_request.path(request), request)
+          handle(
+            :elli_request.method(request) |> to_string(),
+            :elli_request.path(request),
+            request
+          )
         end
 
         unquote(handler_functions)
@@ -59,7 +63,7 @@ defmodule Maverick.Api.Initializer do
              do: {code, wrap_headers(headers), Jason.encode!(response)}
 
         defp wrap_response({:ok, headers, response}, success, _),
-             do: {success, wrap_headers(headers), Jason.encode!(response)}
+          do: {success, wrap_headers(headers), Jason.encode!(response)}
 
         defp wrap_response({:ok, response}, success, _)
              when is_binary(response),
@@ -83,9 +87,12 @@ defmodule Maverick.Api.Initializer do
           do: {success, [@content_type], Jason.encode!(response)}
 
         defp wrap_headers(headers) do
-          [@content_type | headers
-          |> Map.drop(["Content-Type", "content-type"])
-          |> Enum.into([]) ]
+          [
+            @content_type
+            | headers
+              |> Map.drop(["Content-Type", "content-type"])
+              |> Enum.into([])
+          ]
         end
       end
 
@@ -121,6 +128,7 @@ defmodule Maverick.Api.Initializer do
                 unquote(module)
                 |> apply(unquote(function), [args])
                 |> wrap_response(unquote(success), unquote(error))
+
               {:error, reason} ->
                 {400, [@content_type], reason}
             end

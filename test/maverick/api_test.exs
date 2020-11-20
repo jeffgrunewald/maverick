@@ -16,7 +16,9 @@ defmodule Maverick.ApiTest do
   test "serves the handled routes" do
     start_supervised({Maverick.TestApi, []})
 
-    response = :hackney.get("http://localhost:4000/api/v1/hello/steve") |> IO.inspect(label: "HACKNEY RESP")
+    response =
+      :hackney.get("http://localhost:4000/api/v1/hello/steve")
+      |> IO.inspect(label: "HACKNEY RESP")
   end
 
   defp check_modules_available(check_module) do
