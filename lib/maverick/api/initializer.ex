@@ -42,7 +42,7 @@ defmodule Maverick.Api.Initializer do
         unquote(handler_functions)
 
         def handle(method, path, req) do
-          Logger.warn("Unhandled request received : #{inspect(req)}")
+          Logger.info(fn -> "Unhandled request received : #{inspect(req)}" end)
           {404, [Maverick.Request.Util.content_type()], Jason.encode!("Not Found")}
         end
 
@@ -78,11 +78,20 @@ defmodule Maverick.Api.Initializer do
               %Maverick.Request{} = req ->
                 args = Maverick.Request.Util.args(req, unquote(arg_type))
 
-                unquote(module)
-                |> apply(unquote(function), [args])
-                |> Maverick.Request.Util.wrap_response(unquote(success), unquote(error))
+                response =
+                  unquote(module)
+                  |> apply(unquote(function), [args])
+                  |> Maverick.Request.Util.wrap_response(unquote(success), unquote(error))
+
+                Logger.debug(fn -> "Handled request #{inspect(unquote(req_var))}" end)
+
+                response
 
               {:error, reason} ->
+                Logger.info(fn ->
+                  "Error processing request #{inspect(unquote(req_var))} : #{reason}"
+                end)
+
                 {400, [Maverick.Request.Util.content_type()], Jason.encode!(reason)}
             end
           end
