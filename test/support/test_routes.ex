@@ -24,14 +24,17 @@ defmodule Maverick.TestRoute2 do
   def come_fly_with_me(req) do
     destination = Enum.random(["moon", "mars", "stars"])
 
-    response_header = Map.get(req.headers, "Customer-Name", "Anonymous")
+    response_header =
+      Map.update(req.headers, "Space-Rocket", "BLASTOFF", fn val -> String.upcase(val) end)
+      |> Map.drop(["Content-Length"])
 
     {:ok, response_header, %{"destination" => destination}}
   end
 
-  @route path: "clock/:timezone", method: :put
+  @route path: "clock/now", method: :put
   def current_time(%{"timezone" => timezone}) do
-    DateTime.now(timezone)
+    {:ok, time} = DateTime.now(timezone)
+    time
   end
 
   defmacro upcase(string) do

@@ -29,50 +29,24 @@ defmodule Maverick.Api.Initializer do
       quote location: :keep do
         @behaviour :elli_handler
 
+        require Logger
+
         def handle(request, _args) do
-          handle(:elli_request.method(request), :elli_request.path(request), request)
+          handle(
+            :elli_request.method(request) |> to_string(),
+            :elli_request.path(request),
+            request
+          )
         end
 
         unquote(handler_functions)
 
+        def handle(method, path, req) do
+          Logger.info(fn -> "Unhandled request received : #{inspect(req)}" end)
+          {404, [Maverick.Request.Util.content_type()], Jason.encode!("Not Found")}
+        end
+
         def handle_event(_event, _data, _args), do: :ok
-
-        defp wrap_response({code, headers, response} = resp, _, _)
-             when is_integer(code) and is_list(headers) and is_binary(response),
-             do: resp
-
-        defp wrap_response({:ok, headers, response}, success, _)
-             when is_list(headers) and is_binary(response),
-             do: {success, headers, response}
-
-        defp wrap_response({code, headers, response}, _, _)
-             when is_integer(code) and is_list(headers),
-             do: {code, headers, Jason.encode!(response)}
-
-        defp wrap_response({:ok, headers, response}, success, _)
-             when is_list(headers),
-             do: {success, headers, Jason.encode!(response)}
-
-        defp wrap_response({:ok, response}, success, _)
-             when is_binary(response),
-             do: {success, [], response}
-
-        defp wrap_response({:ok, response}, success, _),
-          do: {success, [], Jason.encode!(response)}
-
-        defp wrap_response({:error, response}, _, error)
-             when is_binary(response),
-             do: {error, [], response}
-
-        defp wrap_response({:error, response}, _, error),
-          do: {error, [], Jason.encode!(response)}
-
-        defp wrap_response(response, success, _)
-             when is_binary(response),
-             do: {success, [], response}
-
-        defp wrap_response(response, success, _),
-          do: {success, [], Jason.encode!(response)}
       end
 
     api
@@ -100,12 +74,26 @@ defmodule Maverick.Api.Initializer do
 
         quote location: :keep do
           def handle(unquote(method), unquote(path_var), unquote(req_var)) do
-            req = Maverick.Request.new(unquote(req_var), unquote(path_var_map))
-            args = Maverick.Request.args(req, unquote(arg_type))
+            case Maverick.Request.new(unquote(req_var), unquote(path_var_map)) do
+              %Maverick.Request{} = req ->
+                args = Maverick.Request.Util.args(req, unquote(arg_type))
 
-            unquote(module)
-            |> apply(unquote(function), [args])
-            |> wrap_response(unquote(success), unquote(error))
+                response =
+                  unquote(module)
+                  |> apply(unquote(function), [args])
+                  |> Maverick.Request.Util.wrap_response(unquote(success), unquote(error))
+
+                Logger.debug(fn -> "Handled request #{inspect(unquote(req_var))}" end)
+
+                response
+
+              {:error, reason} ->
+                Logger.info(fn ->
+                  "Error processing request #{inspect(unquote(req_var))} : #{reason}"
+                end)
+
+                {400, [Maverick.Request.Util.content_type()], Jason.encode!(reason)}
+            end
           end
         end
       end

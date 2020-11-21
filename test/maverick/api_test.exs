@@ -1,32 +1,95 @@
 defmodule Maverick.ApiTest do
   use ExUnit.Case
 
-  test "api creates the handler module" do
-    test_module = Maverick.TestApi.Handler
+  @host "http://localhost:4000"
 
-    assert [] == check_modules_available(test_module)
-
+  setup_all do
     start_supervised({Maverick.TestApi, []})
 
-    assert [{test_module, true}] == check_modules_available(test_module)
-
-    assert [handle: 2, handle: 3, handle_event: 3] == test_module.__info__(:functions)
+    :ok
   end
 
-  defp check_modules_available(check_module) do
-    :code.all_available()
-    |> Enum.filter(fn {mod, _, _} ->
-      mod
-      |> to_string()
-      |> String.contains?(check_module |> to_string)
-    end)
-    |> Enum.map(fn {mod, _, loaded} ->
-      mod =
-        mod
-        |> to_string()
-        |> String.to_existing_atom()
+  describe "serves the handled routes" do
+    test "GET request with empty body" do
+      resp = :hackney.get("#{@host}/api/v1/hello/steve")
 
-      {mod, loaded}
-    end)
+      assert 200 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert "Hi there steve" == resp_body(resp)
+    end
+
+    test "POST request with custom error code" do
+      body = %{num1: 2, num2: 3} |> Jason.encode!()
+      resp = :hackney.post("#{@host}/api/v1/multiply", [], body)
+
+      assert 200 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert %{"product" => 6} == resp_body(resp)
+    end
+
+    test "POST request that handles the complete Request struct" do
+      resp =
+        :hackney.post(
+          "#{@host}/api/v1/fly/me/to/the",
+          [{"Space-Rocket", "brrr"}],
+          ""
+        )
+
+      %{"destination" => destination} = resp |> resp_body()
+
+      assert 200 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert {"Space-Rocket", "BRRR"} in resp_headers(resp)
+      assert destination in ["moon", "mars", "stars"]
+    end
+
+    test "PUT requests with query params" do
+      resp = :hackney.put("#{@host}/api/v1/clock/now?timezone=Etc/UTC")
+
+      {:ok, %DateTime{} = time, _} = resp |> resp_body() |> DateTime.from_iso8601()
+
+      assert 200 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert :lt == DateTime.compare(time, DateTime.utc_now())
+    end
+
+    test "handles unexpected routes" do
+      resp =
+        :hackney.post(
+          "#{@host}/api/v1/gimme/that/data",
+          [],
+          %{"magic_word" => "please"} |> Jason.encode!()
+        )
+
+      assert 404 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert "Not Found" == resp_body(resp)
+    end
+
+    test "handles malformed requests" do
+      resp =
+        :hackney.post(
+          "#{@host}/api/v1/fly/me/to/the",
+          [{"Content-Type", "application/x-www-form-urlencoded"}],
+          "field1=value1&field2=value2"
+        )
+
+      assert 400 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert "Invalid request body" == resp_body(resp)
+    end
+  end
+
+  defp resp_code({:ok, status_code, _headers, _ref}), do: status_code
+
+  defp resp_headers({:ok, _status_code, headers, _ref}), do: headers
+
+  defp resp_body({:ok, _status_code, _headers, ref}) do
+    {:ok, body} = :hackney.body(ref)
+    Jason.decode!(body)
+  end
+
+  defp resp_content_type(resp) do
+    {"Content-Type", "application/json"} in resp_headers(resp)
   end
 end
