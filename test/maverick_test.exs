@@ -36,7 +36,7 @@ defmodule MaverickTest do
              module: Maverick.TestRoute2,
              function: :current_time,
              method: "PUT",
-             path: ["api", "v1", "clock", {:variable, "timezone"}],
+             path: ["api", "v1", "clock", "now"],
              args: :params,
              error_code: 404,
              success_code: 200

@@ -43,7 +43,7 @@ defmodule Maverick.Api.Initializer do
 
         def handle(method, path, req) do
           Logger.warn("Unhandled request received : #{inspect(req)}")
-          :ignore
+          {404, [Maverick.Request.Util.content_type()], Jason.encode!("Not Found")}
         end
 
         def handle_event(_event, _data, _args), do: :ok
@@ -83,7 +83,7 @@ defmodule Maverick.Api.Initializer do
                 |> Maverick.Request.Util.wrap_response(unquote(success), unquote(error))
 
               {:error, reason} ->
-                {400, [Maverick.Request.Util.content_type()], reason}
+                {400, [Maverick.Request.Util.content_type()], Jason.encode!(reason)}
             end
           end
         end
