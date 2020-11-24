@@ -14,6 +14,17 @@ defmodule Maverick.Request.Util do
 
   def content_type(), do: @content_type
 
+  def process_request(module, function, arguments) do
+    apply(module, function, [arguments])
+  rescue
+    error ->
+      {500, %{},
+       %{
+         error:
+           "Exception encountered processing request : #{Exception.message(error) || "unnkown"}"
+       }}
+  end
+
   def wrap_response({code, headers, response}, _, _) when is_integer(code) do
     {code, wrap_headers(headers), Jason.encode!(response)}
   end

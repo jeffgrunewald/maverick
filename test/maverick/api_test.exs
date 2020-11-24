@@ -52,6 +52,20 @@ defmodule Maverick.ApiTest do
       assert resp_content_type(resp)
       assert :lt == DateTime.compare(time, DateTime.utc_now())
     end
+  end
+
+  describe "supplies error results" do
+    test "returns errors from exceptions in internal function" do
+      bad_body = %{num1: 2, num2: "three"} |> Jason.encode!()
+      resp = :hackney.post("#{@host}/api/v1/multiply", [], bad_body)
+
+      assert 500 == resp_code(resp)
+
+      assert %{
+               "error" =>
+                 "Exception encountered processing request : bad argument in arithmetic expression"
+             } == resp_body(resp)
+    end
 
     test "handles unexpected routes" do
       resp =

@@ -80,7 +80,7 @@ defmodule Maverick.Api.Initializer do
 
                 response =
                   unquote(module)
-                  |> apply(unquote(function), [args])
+                  |> Maverick.Request.Util.process_request(unquote(function), args)
                   |> Maverick.Request.Util.wrap_response(unquote(success), unquote(error))
 
                 Logger.debug(fn -> "Handled request #{inspect(unquote(req_var))}" end)
