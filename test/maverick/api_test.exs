@@ -62,8 +62,8 @@ defmodule Maverick.ApiTest do
       assert 500 == resp_code(resp)
 
       assert %{
-               "error" =>
-                 "Exception encountered processing request : bad argument in arithmetic expression"
+               "error_code" => 500,
+               "error_message" => "bad argument in arithmetic expression"
              } == resp_body(resp)
     end
 
@@ -90,7 +90,12 @@ defmodule Maverick.ApiTest do
 
       assert 400 == resp_code(resp)
       assert resp_content_type(resp)
-      assert "Invalid request body" == resp_body(resp)
+
+      assert %{
+               "error_code" => 400,
+               "error_message" =>
+                 "Invalid request body : unexpected byte at position 0: 0x66 ('f')"
+             } == resp_body(resp)
     end
   end
 
