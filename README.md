@@ -1,4 +1,4 @@
-<img alt="Maverick" height="290px" src="assets/maverick.png?raw=true">
+<img alt="Maverick" height="250px" src="assets/maverick.png?raw=true">
 
 <!-- MDOC !-->
 
