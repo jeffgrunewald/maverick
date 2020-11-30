@@ -23,16 +23,6 @@ defmodule Maverick.Request do
     :version
   ]
 
-  def new(req(body: body) = request, path_params \\ %{}) do
-    case decode_body(body) do
-      {:ok, body_params} ->
-        new(request, body_params, path_params)
-
-      error ->
-        error
-    end
-  end
-
   def new(
         req(
           args: args,
@@ -47,9 +37,9 @@ defmodule Maverick.Request do
           socket: socket,
           version: version
         ),
-        body_params,
-        path_params
+        path_params \\ %{}
       ) do
+    body_params = decode_body(body)
     query_params = args |> Enum.into(%{})
     params = path_params |> Map.merge(query_params) |> Map.merge(body_params)
 
@@ -72,14 +62,17 @@ defmodule Maverick.Request do
     }
   end
 
-  defp decode_body(""), do: {:ok, %{}}
+  defp decode_body(""), do: %{}
 
   defp decode_body(body) do
-    case Jason.decode(body) do
-      {:ok, json} when is_map(json) -> {:ok, json}
-      {:ok, json} -> {:ok, %{"_json_body" => json}}
-      {:error, %Jason.DecodeError{}} -> {:error, "Invalid request body"}
+    case Jason.decode!(body) do
+      json when is_map(json) -> json
+      json -> %{"_json_body" => json}
     end
+  rescue
+    exception in [Jason.DecodeError] ->
+      raise Maverick.BadRequestError,
+        message: "Invalid request body : #{Exception.message(exception)}"
   end
 
   defp peer_ip(socket) do

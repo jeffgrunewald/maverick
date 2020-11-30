@@ -1,4 +1,6 @@
-# Maverick
+<img alt="Maverick" height="250px" src="assets/maverick.png?raw=true">
+
+<!-- MDOC !-->
 
 Web API framework with a need for speed
 

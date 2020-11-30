@@ -52,7 +52,9 @@ defmodule Maverick.ApiTest do
       assert resp_content_type(resp)
       assert :lt == DateTime.compare(time, DateTime.utc_now())
     end
+  end
 
+  describe "supplies error results" do
     test "handles unexpected routes" do
       resp =
         :hackney.post(
@@ -66,17 +68,13 @@ defmodule Maverick.ApiTest do
       assert "Not Found" == resp_body(resp)
     end
 
-    test "handles malformed requests" do
-      resp =
-        :hackney.post(
-          "#{@host}/api/v1/fly/me/to/the",
-          [{"Content-Type", "application/x-www-form-urlencoded"}],
-          "field1=value1&field2=value2"
-        )
+    test "handles error tuples from internal functions" do
+      body = %{num1: 25, num2: 2} |> Jason.encode!()
+      resp = :hackney.post("#{@host}/api/v1/multiply", [], body)
 
-      assert 400 == resp_code(resp)
+      assert 403 == resp_code(resp)
       assert resp_content_type(resp)
-      assert "Invalid request body" == resp_body(resp)
+      assert "illegal operation" == resp_body(resp)
     end
   end
 

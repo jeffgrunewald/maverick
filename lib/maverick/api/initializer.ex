@@ -73,27 +73,37 @@ defmodule Maverick.Api.Initializer do
         path_var_map = path_var_map(path)
 
         quote location: :keep do
+          alias Maverick.{Exception, Request}
+
           def handle(unquote(method), unquote(path_var), unquote(req_var)) do
-            case Maverick.Request.new(unquote(req_var), unquote(path_var_map)) do
-              %Maverick.Request{} = req ->
-                args = Maverick.Request.Util.args(req, unquote(arg_type))
+            args =
+              unquote(req_var)
+              |> Request.new(unquote(path_var_map))
+              |> Request.Util.args(unquote(arg_type))
 
-                response =
-                  unquote(module)
-                  |> apply(unquote(function), [args])
-                  |> Maverick.Request.Util.wrap_response(unquote(success), unquote(error))
+            response =
+              unquote(module)
+              |> apply(unquote(function), [args])
+              |> Request.Util.wrap_response(unquote(success), unquote(error))
 
-                Logger.debug(fn -> "Handled request #{inspect(unquote(req_var))}" end)
+            Logger.debug(fn -> "Handled request #{inspect(unquote(req_var))}" end)
 
-                response
+            response
+          rescue
+            exception ->
+              %{tag: tag, handler: {mod, func, args}} = Exception.fallback(exception)
 
-              {:error, reason} ->
-                Logger.info(fn ->
-                  "Error processing request #{inspect(unquote(req_var))} : #{reason}"
-                end)
+              Logger.info(fn ->
+                "#{inspect(exception)} encountered processing request #{inspect(unquote(req_var))}; falling back to #{
+                  tag
+                }"
+              end)
 
-                {400, [Maverick.Request.Util.content_type()], Jason.encode!(reason)}
-            end
+              {
+                Exception.error_code(exception),
+                [Request.Util.content_type()],
+                apply(mod, func, args)
+              }
           end
         end
       end
