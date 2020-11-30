@@ -55,18 +55,6 @@ defmodule Maverick.ApiTest do
   end
 
   describe "supplies error results" do
-    test "returns errors from exceptions in internal function" do
-      bad_body = %{num1: 2, num2: "three"} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/multiply", [], bad_body)
-
-      assert 500 == resp_code(resp)
-
-      assert %{
-               "error_code" => 500,
-               "error_message" => "bad argument in arithmetic expression"
-             } == resp_body(resp)
-    end
-
     test "handles unexpected routes" do
       resp =
         :hackney.post(
@@ -80,23 +68,6 @@ defmodule Maverick.ApiTest do
       assert "Not Found" == resp_body(resp)
     end
 
-    test "handles malformed requests" do
-      resp =
-        :hackney.post(
-          "#{@host}/api/v1/fly/me/to/the",
-          [{"Content-Type", "application/x-www-form-urlencoded"}],
-          "field1=value1&field2=value2"
-        )
-
-      assert 400 == resp_code(resp)
-      assert resp_content_type(resp)
-
-      assert %{
-               "error_code" => 400,
-               "error_message" =>
-                 "Invalid request body : unexpected byte at position 0: 0x66 ('f')"
-             } == resp_body(resp)
-    end
   end
 
   defp resp_code({:ok, status_code, _headers, _ref}), do: status_code
