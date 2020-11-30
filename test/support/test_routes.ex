@@ -15,6 +15,30 @@ defmodule Maverick.TestRoute1 do
 
   @route path: "hello/:name", method: :get
   def hello(%{"name" => name}), do: "Hi there " <> name
+
+  @route path: "color_match"
+  def color_match(%{"color" => "red"}) do
+    raise NoRedError
+  end
+
+  def color_match(%{"color" => color}) do
+    color_matches = %{
+      "green" => "light_blue",
+      "yellow" => "dark_blue",
+      "brown" => "indigo",
+      "orange" => "purple",
+      "blue" => "light_green",
+      "red" => "something"
+    }
+
+    match =
+      case Map.get(color_matches, color) do
+        nil -> "black"
+        match -> match
+      end
+
+    %{"match" => match}
+  end
 end
 
 defmodule Maverick.TestRoute2 do

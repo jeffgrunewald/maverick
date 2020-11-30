@@ -39,6 +39,15 @@ defmodule Maverick.ExceptionTest do
                  "Invalid request body : unexpected byte at position 0: 0x66 ('f')"
              } == resp_body(resp)
     end
+
+    test "custom exception handling" do
+      illegal_body = %{"color" => "red"} |> Jason.encode!()
+      resp = :hackney.post("#{@host}/api/v1/color_match", [], illegal_body)
+
+      assert 406 = resp_code(resp)
+
+      assert %{"error_code" => 406, "error_message" => "no red!"} == resp_body(resp)
+    end
   end
 
   defp resp_code({:ok, status_code, _headers, _ref}), do: status_code
