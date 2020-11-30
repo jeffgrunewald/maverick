@@ -2,7 +2,12 @@ defmodule Maverick.TestRoute1 do
   use Maverick, scope: "/api/v1"
 
   @route path: "multiply", args: {:required_params, [:num1, :num2]}, error: 403
-  def multiply(%{"num1" => num1, "num2" => num2}), do: %{product: num1 * num2}
+  def multiply(%{"num1" => num1, "num2" => num2}) do
+    case num1 * num2 do
+      50 -> {:error, "illegal operation"}
+      prod -> %{product: prod}
+    end
+  end
 
   @route path: "wrong"
   defp double(%{"num" => num}), do: num * 2

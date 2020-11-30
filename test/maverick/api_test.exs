@@ -68,6 +68,14 @@ defmodule Maverick.ApiTest do
       assert "Not Found" == resp_body(resp)
     end
 
+    test "handles error tuples from internal functions" do
+      body = %{num1: 25, num2: 2} |> Jason.encode!()
+      resp = :hackney.post("#{@host}/api/v1/multiply", [], body)
+
+      assert 403 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert "illegal operation" == resp_body(resp)
+    end
   end
 
   defp resp_code({:ok, status_code, _headers, _ref}), do: status_code
