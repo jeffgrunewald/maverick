@@ -2,7 +2,7 @@ defmodule Maverick.MixProject do
   use Mix.Project
 
   @name "Maverick"
-  @version "0.1.0"
+  @version "0.1.1"
   @repo "https://github.com/jeffgrunewald/maverick"
 
   def project do
@@ -54,7 +54,7 @@ defmodule Maverick.MixProject do
       logo: "assets/maverick.png",
       source_ref: "v#{@version}",
       source_url: @repo,
-      main: @name
+      main: readme
     ]
   end
 end
