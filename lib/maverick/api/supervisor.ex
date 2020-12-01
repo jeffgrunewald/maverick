@@ -12,6 +12,7 @@ defmodule Maverick.Api.Supervisor do
   def init({api, _otp_app, opts} = init_args) do
     port = Keyword.get(opts, :port, 4000)
     handler = Module.concat(api, Handler)
+
     name =
       opts
       |> Keyword.get(:name, Module.concat(api, Webserver))
@@ -20,10 +21,9 @@ defmodule Maverick.Api.Supervisor do
     standard_config = [port: port, callback: handler, name: name]
 
     ssl_config =
-      case Keyword.get(opts, :ssl, []) do
-        [certfile: _, keyfile: _] = ssl -> [{:ssl, true} | ssl]
-        _ -> []
-      end
+      opts
+      |> Keyword.take([:tls_certfile, :tls_keyfile])
+      |> format_ssl_config()
 
     children = [
       {Maverick.Api.Initializer, init_args},
@@ -39,4 +39,9 @@ defmodule Maverick.Api.Supervisor do
   defp format_name({:via, _, _} = name), do: name
   defp format_name({:global, _} = name), do: name
   defp format_name(name) when is_atom(name), do: {:local, name}
+
+  defp format_ssl_config(tls_certfile: certfile, tls_keyfile: keyfile),
+    do: [ssl: true, certfile: certfile, keyfile: keyfile]
+
+  defp format_ssl_config(_), do: []
 end

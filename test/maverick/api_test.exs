@@ -88,7 +88,7 @@ defmodule Maverick.ApiTest do
     setup do
       cert = Path.expand("../support/cert.pem", __DIR__)
       key = Path.expand("../support/key.pem", __DIR__)
-      opts = [name: :maverick_secure, port: 4443, ssl: [certfile: cert, keyfile: key]]
+      opts = [name: :maverick_secure, port: 4443, tls_certfile: cert, tls_keyfile: key]
 
       start_supervised({Maverick.TestApi, opts})
 
