@@ -96,6 +96,9 @@ defmodule Maverick.ApiTest do
     end
 
     test "handles secured connections" do
+      server = Process.whereis(:maverick_secure)
+      assert is_pid(server)
+
       body = %{num1: 4, num2: 4} |> Jason.encode!()
       resp = :hackney.post("https://localhost:4443/api/v1/multiply", [], body, [:insecure])
 
