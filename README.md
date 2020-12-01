@@ -81,8 +81,7 @@ the form arguments should be received as, response codes, and return value forma
 
 ## Installation
 
-When [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `maverick` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `maverick` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -92,4 +91,4 @@ def deps do
 end
 ```
 
-Once published, the docs can be found at [https://hexdocs.pm/maverick](https://hexdocs.pm/maverick).
+The docs can be found at [https://hexdocs.pm/maverick](https://hexdocs.pm/maverick).
