@@ -3,13 +3,13 @@ defmodule Maverick.ApiTest do
 
   @host "http://localhost:4000"
 
-  setup_all do
-    start_supervised({Maverick.TestApi, []})
-
-    :ok
-  end
-
   describe "serves the handled routes" do
+    setup do
+      start_supervised({Maverick.TestApi, []})
+
+      :ok
+    end
+
     test "GET request with empty body" do
       resp = :hackney.get("#{@host}/api/v1/hello/steve")
 
@@ -55,6 +55,12 @@ defmodule Maverick.ApiTest do
   end
 
   describe "supplies error results" do
+    setup do
+      start_supervised({Maverick.TestApi, []})
+
+      :ok
+    end
+
     test "handles unexpected routes" do
       resp =
         :hackney.post(
@@ -75,6 +81,30 @@ defmodule Maverick.ApiTest do
       assert 403 == resp_code(resp)
       assert resp_content_type(resp)
       assert "illegal operation" == resp_body(resp)
+    end
+  end
+
+  describe "ssl" do
+    setup do
+      cert = Path.expand("../support/cert.pem", __DIR__)
+      key = Path.expand("../support/key.pem", __DIR__)
+      opts = [name: :maverick_secure, port: 4443, tls_certfile: cert, tls_keyfile: key]
+
+      start_supervised({Maverick.TestApi, opts})
+
+      :ok
+    end
+
+    test "handles secured connections" do
+      server = Process.whereis(:maverick_secure)
+      assert is_pid(server)
+
+      body = %{num1: 4, num2: 4} |> Jason.encode!()
+      resp = :hackney.post("https://localhost:4443/api/v1/multiply", [], body, [:insecure])
+
+      assert 200 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert %{"product" => 16} == resp_body(resp)
     end
   end
 

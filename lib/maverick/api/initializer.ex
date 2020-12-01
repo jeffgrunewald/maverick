@@ -1,5 +1,19 @@
 defmodule Maverick.Api.Initializer do
-  @moduledoc false
+  @moduledoc """
+  A GenServer that reads and initializes you webserver callback handler
+  based on the route information exported at compile time.
+
+  The Initializer writes a simple version of the `c:handle/2` callback
+  for the Elli behaviour and all versions of a handle/3 based on routing
+  information pulled in `c:handle/2` (path, http method).
+
+  Initializer builds callback behaviour implementation into a module named
+  by the concatenation of the implementing api module and `Handler`. This is
+  the module the top-level Maverick Supervisor will pass to Elli as the
+  `:callback` in its configuration.
+
+  # Example: `MyApp.Api.Handler`
+  """
 
   use GenServer, restart: :transient
 
@@ -31,6 +45,7 @@ defmodule Maverick.Api.Initializer do
 
         require Logger
 
+        @impl true
         def handle(request, _args) do
           handle(
             :elli_request.method(request) |> to_string(),
@@ -46,6 +61,7 @@ defmodule Maverick.Api.Initializer do
           {404, [Maverick.Request.Util.content_type()], Jason.encode!("Not Found")}
         end
 
+        @impl true
         def handle_event(_event, _data, _args), do: :ok
       end
 
