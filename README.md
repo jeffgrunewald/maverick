@@ -25,6 +25,53 @@ Once you add the `Maverick.Api` to your application supervision tree and start t
 Maverick compiles your routes into an Elli handler module and sends incoming requests
 to your functions, taking care to wrap the return values accordingly.
 
+### Example
+
+With Maverick added to your application's dependencies, create a module that implements the
+`use Maverick.Api` macro and pass it, at a minimum, the name of your application:
+
+```elixir
+  defmodule CoolApp.Api do
+    use Maverick.Api, otp_app: :cool_app
+  end
+```
+
+Then, in your application supervision tree, add your Maverick Api to the list of children:
+
+```elixir
+  children =
+    [
+      maybe_a_database,
+      other_cool_stuff,
+      {CoolApp.Api, name: :cool_app_web, port: 443},
+      anything_else
+    ]
+```
+
+Now it's time to annotate the functions you want served over HTTP. These can be anywhere within
+your project structure that make sense to you, Maverick will compile them all into your callback
+handler. While it's considered best practice to structure your code to separate domain concerns
+and maintain good abstractions, in practice this organization has no effect on what functions are
+available to be routed to by Maverick. Add the `use Maverick` macro to a module that will be
+serving functions and then any public function with the annotation will do (no macros):
+
+```elixir
+  defmodule CoolApp.BusinessLogics do
+    use Maverick, scope: "api/v1"
+
+    @route path: "do/stuff" do
+    def do_stuff(%{"stuff" => what_needs_doing}) do
+      what_needs_doing |> transform_process_etc
+    end
+  end
+```
+
+Once the app is started, you can reach your function at the path, method, etc. configured on
+the route annotation, such as: `curl -XPOST -d '{\"stuff\":\"transform-me!\"}' "http://host:port/api/v1/do/stuff"`
+
+See the docs for more options to configure your route functions such as the path, HTTP method,
+the form arguments should be received as, response codes, and return value formats.
+
 ## To Do
 - [X] Make it work
 - [ ] Telemetry integration via Elli handler's `handle_event/3` callback
