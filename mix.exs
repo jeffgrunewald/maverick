@@ -54,7 +54,9 @@ defmodule Maverick.MixProject do
       logo: "assets/maverick.png",
       source_ref: "v#{@version}",
       source_url: @repo,
-      main: readme
+      extras: [
+        "README.md"
+      ]
     ]
   end
 end
