@@ -70,11 +70,11 @@ The following options can configure functions annotated with the `@route` attrib
   * `:args` - The format of the argument that will be passed to the internal function, which can
     be one of `:params` (the default), `{:required_params: [atom()]}`, or `:request`. If the
     value is `params`, the argument passed to the function will be a string-keyed map merging the
-    path parameters map, query parameters map, and the request body map. If the value is `{required_params, [atom()]}`, where the second element is a list of atoms representing keys that
-    _must_ appear and have non-`nil` values in the request params map, this subset of key/value
-    pairs will be sent as a string-keyed map. If the value is `:request` then the entire `%Maverick.Request{}`
-    will be sent. This is good for handling requests that need access to deeper elements of the
-    HTTP request like the source IP, scheme, port, manipulating headers, etc.
+    path parameters map, query parameters map, and the request body map. If the value is `{required_params, [atom()]}`,
+    where the second element is a list of atoms representing keys that _must_ appear and have non-`nil` values in
+    the request params map, this subset of key/value pairs will be sent as a string-keyed map. If the value is
+    `:request` then the entire Maverick request struct will be sent. This is good for handling requests that need
+    access to deeper elements of the HTTP request like the source IP, scheme, port, manipulating headers, etc.
 
   * `:method` - The HTTP method the function should respond to as an atom or a string. Defaults
     to `"POST"` (all methods are converted to uppercase strings so follow your personal tastes).

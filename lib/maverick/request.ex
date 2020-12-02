@@ -30,7 +30,7 @@ defmodule Maverick.Request do
 
   defrecordp :req, extract(:req, from_lib: "elli/include/elli.hrl")
 
-  @type body :: iodata()
+  @type req_body :: iodata()
   @type host :: binary() | :undefined
   @type method :: binary()
   @type params :: %{optional(binary()) => term()}
@@ -39,7 +39,7 @@ defmodule Maverick.Request do
   @type version :: {0, 9} | {1, 0} | {1, 1}
 
   @type t :: %__MODULE__{
-          body: body(),
+          body: req_body(),
           body_params: params(),
           headers: params(),
           host: host(),
@@ -50,7 +50,7 @@ defmodule Maverick.Request do
           port: :inet.port_number(),
           query_params: params(),
           raw_path: binary(),
-          remote_ip: :inet.ipaddress(),
+          remote_ip: :inet.ip_address(),
           scheme: scheme(),
           socket: socket(),
           version: version()
