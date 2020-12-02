@@ -1,9 +1,54 @@
 defmodule Maverick.Request do
-  @moduledoc false
+  @moduledoc """
+  Defines the Maverick view of a web request as a struct and helper
+  functions for constructing and handling it. Extracts the details from
+  the Erlang record Elli uses to represent the request and adds or
+  reformats various fields for working in Elixir.
+
+  A request contains many of the raw values from the Elli record such as
+  request body as binary or iolist data, the raw request path as a binary,
+  http scheme as binary, and the port number, as well as derived values.
+
+  The query parameters, path parameters, and headers are all converted to
+  string-keyed maps and the request body is attempted to be decoded to a
+  map from JSON. The decoded body, path params, and query params are all
+  merged into a single `:params` map that is the default argument passed
+  to internal functions unless otherwise noted in their decorator.
+
+  A Maverick request struct has similarities between both Elli's request
+  record and Plug's Conn struct, generally adhering closer to Elli's
+  data structures (the version of HTTP as a 2-tuple of integers as opposed
+  to a string) but with occasional tradeoffs for ease of compatibility
+  with Elixir (representing the HTTP methods as strings instead of atoms
+  for example).
+
+  All parameters derived from user input are converted to string-keyed
+  maps to prevent exhausting the BEAM's atom table.
+  """
 
   import Record, only: [defrecordp: 2, extract: 2]
 
   defrecordp :req, extract(:req, from_lib: "elli/include/elli.hrl")
+
+  @type http_method :: "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "TRACE" | binary()
+
+  @type t :: %__MODULE__{
+          body: iodata(),
+          body_params: %{optional(String.t()) => String.t()},
+          headers: %{optional(String.t()) => String.t()},
+          host: binary() | :undefined,
+          method: http_method(),
+          params: %{optional(String.t()) => String.t()},
+          path: [binary()],
+          path_params: %{optional(String.t()) => String.t()},
+          port: 1..65535 | :undefined,
+          query_params: %{optional(String.t()) => String.t()},
+          raw_path: binary(),
+          remote_ip: :inet.ipaddress(),
+          scheme: binary() | :undefined,
+          socket: {:plain, :inet.socket()} | {:ssl, :ssl.sslsocket()} | :undefined,
+          version: {0, 9} | {1, 0} | {1, 1}
+        }
 
   defstruct [
     :body,
@@ -23,6 +68,12 @@ defmodule Maverick.Request do
     :version
   ]
 
+  @doc """
+  Creates a request struct from an Elli http request record
+  and a map of path parameters drawn from variable elements
+  in the route paths as keys and the values supplied in the
+  request as the values.
+  """
   def new(
         req(
           args: args,

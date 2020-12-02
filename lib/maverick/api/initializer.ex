@@ -1,22 +1,31 @@
 defmodule Maverick.Api.Initializer do
-  @moduledoc """
-  A GenServer that reads and initializes you webserver callback handler
-  based on the route information exported at compile time.
+  @moduledoc false
 
-  The Initializer writes a simple version of the `c:handle/2` callback
-  for the Elli behaviour and all versions of a handle/3 based on routing
-  information pulled in `c:handle/2` (path, http method).
-
-  Initializer builds callback behaviour implementation into a module named
-  by the concatenation of the implementing api module and `Handler`. This is
-  the module the top-level Maverick Supervisor will pass to Elli as the
-  `:callback` in its configuration.
-
-  # Example: `MyApp.Api.Handler`
-  """
+  # The Initializer implements a GenServer that reads and constructs the
+  # webserver callback Handler module based on the route information exported
+  # at compile time. It constructs a module named by concatenating the name
+  # of the implementing application's Api module (example: MyApp.Api) and Handler
+  # which is passed to Elli's start_link as the value of the `:callback` config
+  # (`callback: MyApp.Api.Handler`).
+  #
+  # The Initializer's only job is to call the function that constructs the AST
+  # for the Handler module and writing it out before exiting with a `:normal` status.
+  # The Handler module implements a simple `c:handle/2` for the Elli behaviour that
+  # uses the request method and path to route the request to the correct `handle/3`
+  # function which is generated for each annotated internal function with a `@route`
+  # attribute. It also generates a fall-through `handle/3` and the `c:handle_event/3`
+  # function required by the Elli behaviour.
+  #
+  # This module is not intended for direct consumption by the application
+  # implementing Maverick and is instead accessed indirectly by the module that
+  # implements `use Maverick.Api`.
 
   use GenServer, restart: :transient
 
+  @doc """
+  Starts the Initializer, passing a tuple containing the module implementing
+  the `Maverick.Api`, the `:otp_app` for the application and any options.
+  """
   def start_link({api, otp_app, opts}) do
     name = Keyword.get(opts, :init_name, Module.concat(api, Initializer))
 
