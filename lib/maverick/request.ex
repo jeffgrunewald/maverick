@@ -30,24 +30,30 @@ defmodule Maverick.Request do
 
   defrecordp :req, extract(:req, from_lib: "elli/include/elli.hrl")
 
-  @type http_method :: "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "TRACE" | binary()
+  @type body :: iodata()
+  @type host :: binary() | :undefined
+  @type method :: binary()
+  @type params :: %{optional(binary()) => term()}
+  @type scheme :: binary() | :undefined
+  @type socket :: {:plain, :inet.socket()} | {:ssl, :ssl.sslsocket()} | :undefined
+  @type version :: {0, 9} | {1, 0} | {1, 1}
 
   @type t :: %__MODULE__{
-          body: iodata(),
-          body_params: %{optional(String.t()) => String.t()},
-          headers: %{optional(String.t()) => String.t()},
-          host: binary() | :undefined,
-          method: http_method(),
-          params: %{optional(String.t()) => String.t()},
+          body: body(),
+          body_params: params(),
+          headers: params(),
+          host: host(),
+          method: method(),
+          params: params(),
           path: [binary()],
-          path_params: %{optional(String.t()) => String.t()},
-          port: 1..65535 | :undefined,
-          query_params: %{optional(String.t()) => String.t()},
+          path_params: params(),
+          port: :inet.port_number(),
+          query_params: params(),
           raw_path: binary(),
           remote_ip: :inet.ipaddress(),
-          scheme: binary() | :undefined,
-          socket: {:plain, :inet.socket()} | {:ssl, :ssl.sslsocket()} | :undefined,
-          version: {0, 9} | {1, 0} | {1, 1}
+          scheme: scheme(),
+          socket: socket(),
+          version: version()
         }
 
   defstruct [
