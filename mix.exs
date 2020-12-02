@@ -2,7 +2,7 @@ defmodule Maverick.MixProject do
   use Mix.Project
 
   @name "Maverick"
-  @version "0.1.2"
+  @version "0.1.3"
   @repo "https://github.com/jeffgrunewald/maverick"
 
   def project do
@@ -34,7 +34,7 @@ defmodule Maverick.MixProject do
       {:jason, "~> 1.2"},
       {:nimble_parsec, "~> 1.1", optional: true},
       {:hackney, "~> 1.16", only: :test},
-      {:ex_doc, "~> 0.23", only: :dev}
+      {:ex_doc, "~> 0.23", only: :dev, runtime: false}
     ]
   end
 
@@ -52,9 +52,9 @@ defmodule Maverick.MixProject do
   defp docs do
     [
       logo: "assets/maverick-logo.png",
-      main: @name,
       source_ref: "v#{@version}",
-      source_url: @repo
+      source_url: @repo,
+      main: @name
     ]
   end
 end
