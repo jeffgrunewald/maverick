@@ -4,16 +4,6 @@
 
 Web API framework with a need for speed
 
-## But Why?
-
-A full web framework with support for live content updates and server-side rendering
-is great, but sometimes you just want a way to handle JSON-based service requests over
-HTTP without all the bells and whistles.
-
-Maverick aims to fill the niche between a full Phoenix Framework just for providing a
-web-based API and hand-rolling a Plug API while backing your service with the super-performant
-Elli webserver.
-
 ## Use
 
 Maverick builds the webserver handler by reading annotations on functions you want to
@@ -71,6 +61,18 @@ the route annotation, such as: `curl -XPOST -d '{\"stuff\":\"transform-me!\"}' "
 
 See the docs for more options to configure your route functions such as the path, HTTP method,
 the form arguments should be received as, response codes, and return value formats.
+
+<!-- MDOC !-->
+
+## But Why?
+
+A full web framework with support for live content updates and server-side rendering
+is great, but sometimes you just want a way to handle JSON-based service requests over
+HTTP without all the bells and whistles.
+
+Maverick aims to fill the niche between a full Phoenix Framework just for providing a
+web-based API and hand-rolling a Plug API while backing your service with the super-performant
+[Elli](https://github.com/elli-lib/elli) webserver.
 
 ## To Do
 - [X] Make it work
