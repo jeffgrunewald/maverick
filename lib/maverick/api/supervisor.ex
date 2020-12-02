@@ -1,6 +1,19 @@
 defmodule Maverick.Api.Supervisor do
   @moduledoc false
 
+  # Implements the main Maverick supervisor that orchestrates
+  # the lifecycle of the Maverick.Api.Initializer and the Elli
+  # server process.
+  #
+  # Validates the configuration for the server, including port and
+  # SSL/TLS configuration as well as any names under which to register
+  # the three processes and ensures the Initializer is started first
+  # to allow for creation of the Elli callback Handler module.
+  #
+  # This module is not intended for direct consumption by the
+  # application implementing Maverick and is instead intended to be
+  # called indirectly from the module implementing `use Maverick.Api`
+
   use Supervisor
 
   @doc """

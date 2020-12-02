@@ -1,5 +1,9 @@
 defmodule Maverick do
-  @moduledoc false
+  @external_resource "README.md"
+  @moduledoc "README.md"
+             |> File.read!()
+             |> String.split("<!-- MDOC !-->")
+             |> Enum.fetch!(1)
 
   defmacro __using__(opts) do
     scope = Keyword.get(opts, :scope, "")
