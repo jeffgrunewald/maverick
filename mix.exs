@@ -51,7 +51,7 @@ defmodule Maverick.MixProject do
 
   defp docs do
     [
-      logo: "assets/maverick.png",
+      logo: "assets/maverick-logo.png",
       main: @name,
       source_ref: "v#{@version}",
       source_url: @repo
