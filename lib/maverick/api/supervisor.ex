@@ -1,7 +1,12 @@
 defmodule Maverick.Api.Supervisor do
   @moduledoc false
+
   use Supervisor
 
+  @doc """
+  Start the api supervisor, passing Api module, the `:otp_app` application
+  name, and any options to configure the web server or the initializer.
+  """
   def start_link(api, otp_app, opts) do
     name = Keyword.get(opts, :supervisor_name, Module.concat(api, Supervisor))
 
