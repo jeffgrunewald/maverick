@@ -49,7 +49,7 @@ serving functions and then any public function (sorry, no macros) with the `@rou
   defmodule CoolApp.BusinessLogics do
     use Maverick, scope: "api/v1"
 
-    @route path: "do/stuff" do
+    @route path: "do/stuff"
     def do_stuff(%{"stuff" => what_needs_doing}) do
       what_needs_doing |> transform_process_etc
     end
