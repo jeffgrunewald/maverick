@@ -7,11 +7,10 @@ defmodule Maverick.Api do
   top-level application supervisor.
 
   The Api module implementing `use Maverick.Api`, when started,
-  will orchestrate the start of the `Maverick.Api.Initializer` that
-  does the heavy lifting of compiling function routes into a
-  callback Handler module at application boot and then handing off to
-  the Elli webserver configured to route requests by way of that
-  Handler module.
+  will orchestrate the start of the process that does the heavy
+  lifting of compiling function routes into a callback Handler
+  module at application boot and then handing off to the Elli
+  webserver configured to route requests by way of that Handler module.
 
   ## `use Maverick.Api` options
 

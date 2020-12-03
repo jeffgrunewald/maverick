@@ -10,7 +10,7 @@ defmodule Maverick.Request.Util do
   @content_type {"Content-Type", "application/json"}
 
   @doc """
-  Extract the specific argument type from the incoming `%Maverick.Request{}`
+  Extract the specific argument type from the incoming `Maverick.Request` struct
   that should be passed to an internal function from its `handle/3` routing
   function based on the expected type from the function's `@route` attributed
 
@@ -21,7 +21,7 @@ defmodule Maverick.Request.Util do
       will be passed.
     * `:required params` - a map consisting of the specific key/value pairs
       specified by the atom-keyed list in the `@route` attribute.
-    * `:request` - the entire `%Maverick.Request{}` will be passed to the function.
+    * `:request` - the entire Request struct will be passed to the function.
   """
   def args(%Request{params: params}, {:required_params, required}) do
     Map.take(params, required)

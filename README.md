@@ -6,10 +6,10 @@ Web API framework with a need for speed
 
 ## Use
 
-Maverick builds the webserver handler by reading annotations on functions you want to
-expose as part of your API. To publish a function, add `use Maverick` to your module and
-the `@route` attribute to the relevant functions. Pass a keyword list of options to the
-route attribute including the `:path` and you're off to the races.
+Maverick builds on top of the [Elli](https://github.com/elli-lib/elli) webserver and creates
+the webserver handler by reading annotations on functions you want to expose as part of your API. To publish a function, add `use Maverick` to your module and the `@route` attribute to
+the relevant functions. Pass a keyword list of options to the route attribute including the
+`:path` and you're off to the races.
 
 Once you add the `Maverick.Api` to your application supervision tree and start the app,
 Maverick compiles your routes into an Elli handler module and sends incoming requests
@@ -42,7 +42,7 @@ Now it's time to annotate the functions you want served over HTTP. These can be 
 your project structure that make sense to you, Maverick will compile them all into your callback
 handler. While it's considered best practice to structure your code to separate domain concerns
 and maintain good abstractions, in practice this organization has no effect on what functions are
-available to be routed to by Maverick. Add the `use Maverick` macro to a module that will be
+available to be routed to by Maverick. Add `use Maverick` to a module that will be
 serving functions and then any public function (sorry, no macros) with the `@route` annotation will do:
 
 ```elixir
@@ -68,13 +68,18 @@ The following options can configure functions annotated with the `@route` attrib
     such as `api/customers/:customer_id` (required).
 
   * `:args` - The format of the argument that will be passed to the internal function, which can
-    be one of `:params` (the default), `{:required_params: [atom()]}`, or `:request`. If the
-    value is `params`, the argument passed to the function will be a string-keyed map merging the
-    path parameters map, query parameters map, and the request body map. If the value is `{required_params, [atom()]}`, where the second element is a list of atoms representing keys that
-    _must_ appear and have non-`nil` values in the request params map, this subset of key/value
-    pairs will be sent as a string-keyed map. If the value is `:request` then the entire `%Maverick.Request{}`
-    will be sent. This is good for handling requests that need access to deeper elements of the
-    HTTP request like the source IP, scheme, port, manipulating headers, etc.
+    be one of `:params` (the default), `{:required_params: [atom()]}`, or `:request`.
+
+      * `:params` - The argument passed to the function will be a string-keyed map merging the
+        path parameters map, query parameters map, and the request body map.
+
+      * `{:required_params, [atom()]}` - The second element is a list of atoms representing keys
+        that _must_ appear and have non-`nil` values in the request params map, this subset of
+        key/value pairs will be sent as a string-keyed map.
+
+      * `:request` - The entire Maverick request struct will be sent. This is good for handling
+        requests that need access to deeper elements of the HTTP request like the source IP,
+        scheme, port, manipulating headers, etc.
 
   * `:method` - The HTTP method the function should respond to as an atom or a string. Defaults
     to `"POST"` (all methods are converted to uppercase strings so follow your personal tastes).
