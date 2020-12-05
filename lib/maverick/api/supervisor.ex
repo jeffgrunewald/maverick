@@ -15,6 +15,7 @@ defmodule Maverick.Api.Supervisor do
   # called indirectly from the module implementing `use Maverick.Api`
 
   use Supervisor
+  @server Maverick.Server.Elli
 
   @doc """
   Start the api supervisor, passing Api module, the `:otp_app` application
@@ -27,39 +28,11 @@ defmodule Maverick.Api.Supervisor do
   end
 
   @impl true
-  def init({api, _otp_app, opts} = init_args) do
-    port = Keyword.get(opts, :port, 4000)
-    handler = Module.concat(api, Handler)
-
-    name =
-      opts
-      |> Keyword.get(:name, Module.concat(api, Webserver))
-      |> format_name()
-
-    standard_config = [port: port, callback: handler, name: name]
-
-    ssl_config =
-      opts
-      |> Keyword.take([:tls_certfile, :tls_keyfile])
-      |> format_ssl_config()
-
-    children = [
-      {Maverick.Api.Initializer, init_args},
-      %{
-        id: :elli,
-        start: {:elli, :start_link, [Keyword.merge(standard_config, ssl_config)]}
-      }
+  def init({api, otp_app, opts}) do
+    [
+      {Maverick.Api.Initializer, {api, otp_app, opts}},
+      @server.child_spec(api, opts)
     ]
-
-    Supervisor.init(children, strategy: :one_for_one)
+    |> Supervisor.init(strategy: :one_for_one)
   end
-
-  defp format_name({:via, _, _} = name), do: name
-  defp format_name({:global, _} = name), do: name
-  defp format_name(name) when is_atom(name), do: {:local, name}
-
-  defp format_ssl_config(tls_certfile: certfile, tls_keyfile: keyfile),
-    do: [ssl: true, certfile: certfile, keyfile: keyfile]
-
-  defp format_ssl_config(_), do: []
 end
