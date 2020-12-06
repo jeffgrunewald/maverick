@@ -21,7 +21,6 @@ defmodule Maverick.Api.Initializer do
   # implements `use Maverick.Api`.
 
   use GenServer, restart: :transient
-  @server Maverick.Server.Elli
 
   @doc """
   Starts the Initializer, passing a tuple containing the module implementing
@@ -50,7 +49,7 @@ defmodule Maverick.Api.Initializer do
     contents =
       otp_app
       |> get_routes()
-      |> @server.router_contents()
+      |> api.server().router_contents()
 
     api
     |> Module.concat(Handler)

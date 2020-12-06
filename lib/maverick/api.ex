@@ -43,6 +43,7 @@ defmodule Maverick.Api do
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       @otp_app Keyword.fetch!(opts, :otp_app)
+      @server Keyword.get(opts, :server, Maverick.Server.Elli)
 
       def child_spec(opts) do
         %{
@@ -55,6 +56,8 @@ defmodule Maverick.Api do
       def start_link(opts \\ []) do
         Maverick.Api.Supervisor.start_link(__MODULE__, @otp_app, opts)
       end
+
+      def server(), do: @server
     end
   end
 end

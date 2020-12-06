@@ -15,7 +15,6 @@ defmodule Maverick.Api.Supervisor do
   # called indirectly from the module implementing `use Maverick.Api`
 
   use Supervisor
-  @server Maverick.Server.Elli
 
   @doc """
   Start the api supervisor, passing Api module, the `:otp_app` application
@@ -31,7 +30,7 @@ defmodule Maverick.Api.Supervisor do
   def init({api, otp_app, opts}) do
     [
       {Maverick.Api.Initializer, {api, otp_app, opts}},
-      @server.child_spec(api, opts)
+      api.server().child_spec(api, opts)
     ]
     |> Supervisor.init(strategy: :one_for_one)
   end
