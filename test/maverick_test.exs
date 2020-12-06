@@ -2,7 +2,7 @@ defmodule MaverickTest do
   use ExUnit.Case
 
   test "creates getters for annotated public functions" do
-    assert %{
+    assert %Maverick.Route{
              module: Maverick.TestRoute1,
              function: :multiply,
              method: "POST",
@@ -12,7 +12,7 @@ defmodule MaverickTest do
              success_code: 200
            } in Maverick.TestRoute1.Maverick.Router.routes()
 
-    assert %{
+    assert %Maverick.Route{
              module: Maverick.TestRoute1,
              function: :hello,
              method: "GET",
@@ -22,7 +22,7 @@ defmodule MaverickTest do
              success_code: 200
            } in Maverick.TestRoute1.Maverick.Router.routes()
 
-    assert %{
+    assert %Maverick.Route{
              module: Maverick.TestRoute2,
              function: :come_fly_with_me,
              method: "POST",
@@ -32,7 +32,7 @@ defmodule MaverickTest do
              success_code: 200
            } in Maverick.TestRoute2.Maverick.Router.routes()
 
-    assert %{
+    assert %Maverick.Route{
              module: Maverick.TestRoute2,
              function: :current_time,
              method: "PUT",

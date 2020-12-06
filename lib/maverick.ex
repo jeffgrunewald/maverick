@@ -40,7 +40,7 @@ defmodule Maverick do
         (ensure_leading_slash(scope) <> ensure_leading_slash(path))
         |> Maverick.PathParser.parse()
 
-      Module.put_attribute(module, :maverick_routes, %{
+      Module.put_attribute(module, :maverick_routes, %Maverick.Route{
         module: module,
         function: name,
         args: arg_type,

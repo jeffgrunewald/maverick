@@ -51,7 +51,7 @@ defmodule Maverick.Server.Elli do
   end
 
   defp generate_handler_functions(routes) do
-      for %{
+      for %Maverick.Route{
             args: arg_type,
             function: function,
             method: method,
