@@ -6,7 +6,7 @@ defmodule MaverickTest do
              module: Maverick.TestRoute1,
              function: :multiply,
              method: "POST",
-             path: ["api", "v1", "multiply"],
+             path: ["route1", "multiply"],
              args: {:required_params, ["num1", "num2"]},
              error_code: 403,
              success_code: 200
@@ -16,7 +16,7 @@ defmodule MaverickTest do
              module: Maverick.TestRoute1,
              function: :hello,
              method: "GET",
-             path: ["api", "v1", "hello", {:variable, "name"}],
+             path: ["route1", "hello", {:variable, "name"}],
              args: :params,
              error_code: 404,
              success_code: 200
@@ -26,7 +26,7 @@ defmodule MaverickTest do
              module: Maverick.TestRoute2,
              function: :come_fly_with_me,
              method: "POST",
-             path: ["api", "v1", "fly", "me", "to", "the"],
+             path: ["route2", "fly", "me", "to", "the"],
              args: :request,
              error_code: 404,
              success_code: 200
@@ -36,7 +36,7 @@ defmodule MaverickTest do
              module: Maverick.TestRoute2,
              function: :current_time,
              method: "PUT",
-             path: ["api", "v1", "clock", "now"],
+             path: ["route2", "clock", "now"],
              args: :params,
              error_code: 404,
              success_code: 200

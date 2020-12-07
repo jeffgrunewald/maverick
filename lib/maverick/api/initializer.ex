@@ -45,8 +45,8 @@ defmodule Maverick.Api.Initializer do
     {:stop, :normal, state}
   end
 
-  defp build_handler_module({api, otp_app}) do
-    handler_functions = generate_handler_functions(otp_app)
+  defp build_handler_module({api, _otp_app} = opts) do
+    handler_functions = generate_handler_functions(opts)
 
     contents =
       quote location: :keep do
@@ -81,7 +81,9 @@ defmodule Maverick.Api.Initializer do
     :ok
   end
 
-  defp generate_handler_functions(app) do
+  defp generate_handler_functions({api, app}) do
+    root_scope = api.root_scope()
+
     contents =
       for %{
             args: arg_type,
@@ -94,8 +96,9 @@ defmodule Maverick.Api.Initializer do
           } <-
             get_routes(app) do
         req_var = Macro.var(:req, __MODULE__)
-        path_var = variablize_path(path)
-        path_var_map = path_var_map(path)
+        full_path = root_scope ++ path
+        path_var = variablize_path(full_path)
+        path_var_map = path_var_map(full_path)
 
         quote location: :keep do
           alias Maverick.{Exception, Request}

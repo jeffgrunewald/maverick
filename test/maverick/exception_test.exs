@@ -12,7 +12,7 @@ defmodule Maverick.ExceptionTest do
   describe "handles exceptions" do
     test "default fallback impl for unexpected exceptions" do
       bad_body = %{num1: 2, num2: "three"} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/multiply", [], bad_body)
+      resp = :hackney.post("#{@host}/api/v1/route1/multiply", [], bad_body)
 
       assert 500 == resp_code(resp)
 
@@ -25,7 +25,7 @@ defmodule Maverick.ExceptionTest do
     test "known exception type in request handling" do
       resp =
         :hackney.post(
-          "#{@host}/api/v1/fly/me/to/the",
+          "#{@host}/api/v1/route2/fly/me/to/the",
           [{"Content-Type", "application/x-www-form-urlencoded"}],
           "field1=value1&field2=value2"
         )
@@ -42,7 +42,7 @@ defmodule Maverick.ExceptionTest do
 
     test "custom exception handling" do
       illegal_body = %{"color" => "red"} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/color_match", [], illegal_body)
+      resp = :hackney.post("#{@host}/api/v1/route1/color_match", [], illegal_body)
 
       assert 406 = resp_code(resp)
 
