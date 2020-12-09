@@ -31,6 +31,7 @@ defmodule Maverick.MixProject do
   defp deps do
     [
       {:elli, "~> 3.3"},
+      {:plug_cowboy, "~> 2.4"},
       {:jason, "~> 1.2"},
       {:nimble_parsec, "~> 1.1", optional: true},
       {:hackney, "~> 1.16", only: :test},

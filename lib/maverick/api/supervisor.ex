@@ -28,8 +28,9 @@ defmodule Maverick.Api.Supervisor do
 
   @impl true
   def init({api, otp_app, opts}) do
+    Maverick.Api.Initializer.init({api, otp_app})
+
     [
-      {Maverick.Api.Initializer, {api, otp_app, opts}},
       api.server().child_spec(api, opts)
     ]
     |> Supervisor.init(strategy: :one_for_one)

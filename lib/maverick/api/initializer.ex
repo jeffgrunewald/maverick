@@ -20,29 +20,23 @@ defmodule Maverick.Api.Initializer do
   # implementing Maverick and is instead accessed indirectly by the module that
   # implements `use Maverick.Api`.
 
-  use GenServer, restart: :transient
+  # use GenServer, restart: :transient
 
-  @doc """
-  Starts the Initializer, passing a tuple containing the module implementing
-  the `Maverick.Api`, the `:otp_app` for the application and any options.
-  """
-  def start_link({api, otp_app, opts}) do
-    name = Keyword.get(opts, :init_name, Module.concat(api, Initializer))
+  # @doc """
+  # Starts the Initializer, passing a tuple containing the module implementing
+  # the `Maverick.Api`, the `:otp_app` for the application and any options.
+  # """
+  # def start_link({api, otp_app, opts}) do
+  #   name = Keyword.get(opts, :init_name, Module.concat(api, Initializer))
 
-    GenServer.start_link(__MODULE__, {api, otp_app}, name: name)
-  end
+  #   GenServer.start_link(__MODULE__, {api, otp_app}, name: name)
+  # end
 
-  @impl true
   def init(opts) do
     case build_handler_module(opts) do
-      :ok -> {:ok, nil, {:continue, :exit}}
+      :ok -> :ok
       _ -> {:error, "Failed to initialize the handler"}
     end
-  end
-
-  @impl true
-  def handle_continue(:exit, state) do
-    {:stop, :normal, state}
   end
 
   defp build_handler_module({api, otp_app}) do
@@ -51,8 +45,7 @@ defmodule Maverick.Api.Initializer do
       |> get_routes()
       |> api.server().router_contents()
 
-    api
-    |> Module.concat(Handler)
+    api.router_module()
     |> Module.create(contents, Macro.Env.location(__ENV__))
 
     :ok

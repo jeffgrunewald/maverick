@@ -58,6 +58,10 @@ defmodule Maverick.Api do
       end
 
       def server(), do: @server
+
+      def router_module() do
+        Module.concat(__MODULE__, Handler)
+      end
     end
   end
 end
