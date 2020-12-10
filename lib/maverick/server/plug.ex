@@ -39,17 +39,16 @@ defmodule Maverick.Server.Plug do
           function: function,
           method: method,
           module: module,
-          path: path,
+          raw_path: path,
           success_code: success,
           error_code: error
         } <-
           routes do
-      plug_path = to_plug_path(path)
       method_macro = method |> String.downcase() |> String.to_atom()
 
       result =
         quote location: :keep do
-          unquote(method_macro)(unquote(plug_path)) do
+          unquote(method_macro)(unquote(path)) do
             arg = Maverick.Server.Plug.decode_arg_type(var!(conn), unquote(arg_type))
             response = apply(unquote(module), unquote(function), [arg])
 
@@ -66,22 +65,6 @@ defmodule Maverick.Server.Plug do
 
       result
     end
-  end
-
-  defp to_plug_path(path) do
-    result =
-      Enum.map(path, fn element ->
-        case element do
-          {:variable, variable} ->
-            ":" <> variable
-
-          _ ->
-            element
-        end
-      end)
-      |> Enum.join("/")
-
-    "/" <> result
   end
 
   def to_request(conn) do

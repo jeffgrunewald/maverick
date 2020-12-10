@@ -36,16 +36,17 @@ defmodule Maverick do
         |> to_string()
         |> String.upcase()
 
-      {:ok, path, "", %{}, _, _} =
-        (ensure_leading_slash(scope) <> ensure_leading_slash(path))
-        |> Maverick.PathParser.parse()
+      raw_path = ensure_leading_slash(scope) <> ensure_leading_slash(path)
+
+      {:ok, parsed_path, "", %{}, _, _} = Maverick.PathParser.parse(raw_path)
 
       Module.put_attribute(module, :maverick_routes, %Maverick.Route{
         module: module,
         function: name,
         args: arg_type,
         method: method,
-        path: path,
+        path: parsed_path,
+        raw_path: raw_path,
         success_code: success_code,
         error_code: error_code
       })
