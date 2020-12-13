@@ -1,5 +1,5 @@
 defmodule Maverick.TestRoute1 do
-  use Maverick, scope: "/api/v1"
+  use Maverick, scope: "/route1"
 
   @route path: "multiply", args: {:required_params, [:num1, :num2]}, error: 403
   def multiply(%{"num1" => num1, "num2" => num2}) do
@@ -47,7 +47,7 @@ defmodule Maverick.TestRoute1 do
 end
 
 defmodule Maverick.TestRoute2 do
-  use Maverick, scope: "/api/v1"
+  use Maverick, scope: "/route2"
 
   @route path: "fly/me/to/the", args: :request
   def come_fly_with_me(req) do

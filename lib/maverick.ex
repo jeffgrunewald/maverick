@@ -33,9 +33,10 @@ defmodule Maverick do
         |> to_string()
         |> String.upcase()
 
-      {:ok, path, "", %{}, _, _} =
-        (ensure_leading_slash(scope) <> ensure_leading_slash(path))
-        |> Maverick.PathParser.parse()
+      path =
+        [scope, path]
+        |> Enum.join("/")
+        |> Maverick.Path.parse()
 
       Module.put_attribute(module, :maverick_routes, %{
         module: module,
@@ -83,9 +84,6 @@ defmodule Maverick do
     {code, _} = Integer.parse(code)
     code
   end
-
-  defp ensure_leading_slash("/" <> _rest = string), do: string
-  defp ensure_leading_slash(path), do: "/" <> path
 
   defp validate_arg_type({:required_params, list}),
     do: {:required_params, Enum.map(list, &to_string/1)}

@@ -11,7 +11,7 @@ defmodule Maverick.ApiTest do
     end
 
     test "GET request with empty body" do
-      resp = :hackney.get("#{@host}/api/v1/hello/steve")
+      resp = :hackney.get("#{@host}/api/v1/route1/hello/steve")
 
       assert 200 == resp_code(resp)
       assert resp_content_type(resp)
@@ -20,7 +20,7 @@ defmodule Maverick.ApiTest do
 
     test "POST request with custom error code" do
       body = %{num1: 2, num2: 3} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/multiply", [], body)
+      resp = :hackney.post("#{@host}/api/v1/route1/multiply", [], body)
 
       assert 200 == resp_code(resp)
       assert resp_content_type(resp)
@@ -30,7 +30,7 @@ defmodule Maverick.ApiTest do
     test "POST request that handles the complete Request struct" do
       resp =
         :hackney.post(
-          "#{@host}/api/v1/fly/me/to/the",
+          "#{@host}/api/v1/route2/fly/me/to/the",
           [{"Space-Rocket", "brrr"}],
           ""
         )
@@ -44,7 +44,7 @@ defmodule Maverick.ApiTest do
     end
 
     test "PUT requests with query params" do
-      resp = :hackney.put("#{@host}/api/v1/clock/now?timezone=Etc/UTC")
+      resp = :hackney.put("#{@host}/api/v1/route2/clock/now?timezone=Etc/UTC")
 
       {:ok, %DateTime{} = time, _} = resp |> resp_body() |> DateTime.from_iso8601()
 
@@ -64,7 +64,7 @@ defmodule Maverick.ApiTest do
     test "handles unexpected routes" do
       resp =
         :hackney.post(
-          "#{@host}/api/v1/gimme/that/data",
+          "#{@host}/api/v1/route1/gimme/that/data",
           [],
           %{"magic_word" => "please"} |> Jason.encode!()
         )
@@ -76,7 +76,7 @@ defmodule Maverick.ApiTest do
 
     test "handles error tuples from internal functions" do
       body = %{num1: 25, num2: 2} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/multiply", [], body)
+      resp = :hackney.post("#{@host}/api/v1/route1/multiply", [], body)
 
       assert 403 == resp_code(resp)
       assert resp_content_type(resp)
@@ -100,7 +100,7 @@ defmodule Maverick.ApiTest do
       assert is_pid(server)
 
       body = %{num1: 4, num2: 4} |> Jason.encode!()
-      resp = :hackney.post("https://localhost:4443/api/v1/multiply", [], body, [:insecure])
+      resp = :hackney.post("https://localhost:4443/api/v1/route1/multiply", [], body, [:insecure])
 
       assert 200 == resp_code(resp)
       assert resp_content_type(resp)
