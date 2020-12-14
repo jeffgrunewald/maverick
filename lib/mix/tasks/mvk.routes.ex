@@ -82,11 +82,7 @@ defmodule Mix.Tasks.Mvk.Routes do
     %{args: args, function: func, method: method, module: mod, path: path} = route
     {method_len, path_len, mod_len, func_len} = column_widths
 
-<<<<<<< HEAD
     String.pad_leading(method, method_len) <>
-=======
-      String.pad_leading(method, method_len) <>
->>>>>>> e3d1619... Make route list public on Api module, mix task
       "  " <>
       String.pad_trailing(path, path_len) <>
       "  " <>
