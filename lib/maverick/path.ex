@@ -5,6 +5,10 @@ defmodule Maverick.Path do
   incoming requests.
   """
 
+  @type path_node :: String.t() | {:variable, String.t()}
+  @type path :: [path_node]
+  @type raw_path :: String.t()
+
   import NimbleParsec
 
   @doc """
@@ -14,8 +18,9 @@ defmodule Maverick.Path do
   tuple. At runtime, variable tuples are used to construct the
   path params portion of a Maverick request.
   """
+  @spec parse(String.t()) :: path()
   def parse(string) do
-    case ("/" <> string) |> parse_path() do
+    case parse_path("/" <> string) do
       {:ok, result, _, _, _, _} ->
         result
 
@@ -24,7 +29,27 @@ defmodule Maverick.Path do
     end
   end
 
+  @doc """
+  Reads a path string and validates as a Maverick-compatible path,
+  including any colon (":") characters signifying a path variable.
+  Strips any extraneous forward slashes from the result.
+  """
+  @spec validate(String.t()) :: raw_path()
+  def validate(string) do
+    case parse_raw_path("/" <> string) do
+      {:ok, [result], _, _, _, _} ->
+        "/" <> result
+
+      {:error, label, path, _, _, _} ->
+        raise __MODULE__.ParseError, message: label, path: path
+    end
+  end
+
   url_file_safe_alphabet = [?A..?z, ?0..?9, ?-, ?_]
+
+  root_slash = ignore(repeat(string("/"))) |> eos()
+
+  separator = ignore(times(string("/"), min: 1))
 
   static = ascii_string(url_file_safe_alphabet, min: 1)
 
@@ -33,8 +58,8 @@ defmodule Maverick.Path do
     |> ascii_string(url_file_safe_alphabet -- [?-], min: 1)
     |> unwrap_and_tag(:variable)
 
-  element =
-    ignore(times(string("/"), min: 1))
+  node =
+    separator
     |> choice([
       variable,
       static
@@ -42,12 +67,26 @@ defmodule Maverick.Path do
 
   path =
     choice([
-      repeat(element) |> eos(),
-      ignore(repeat(string("/"))) |> eos()
+      repeat(node) |> eos(),
+      root_slash
     ])
     |> label("only legal characters")
 
   defparsecp(:parse_path, path)
+
+  raw_node =
+    separator
+    |> ascii_string(url_file_safe_alphabet ++ [?:], min: 1)
+
+  raw_path =
+    choice([
+      repeat(raw_node) |> eos(),
+      root_slash
+    ])
+    |> reduce({Enum, :join, ["/"]})
+    |> label("only legal characters")
+
+  defparsecp(:parse_raw_path, raw_path)
 
   defmodule ParseError do
     @moduledoc """

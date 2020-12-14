@@ -26,15 +26,15 @@ defmodule Maverick.Api.Initializer do
   Starts the Initializer, passing a tuple containing the module implementing
   the `Maverick.Api`, the `:otp_app` for the application and any options.
   """
-  def start_link({api, otp_app, opts}) do
+  def start_link({api, opts}) do
     name = Keyword.get(opts, :init_name, Module.concat(api, Initializer))
 
-    GenServer.start_link(__MODULE__, {api, otp_app}, name: name)
+    GenServer.start_link(__MODULE__, api, name: name)
   end
 
   @impl true
-  def init(opts) do
-    case build_handler_module(opts) do
+  def init(api) do
+    case build_handler_module(api) do
       :ok -> {:ok, nil, {:continue, :exit}}
       _ -> {:error, "Failed to initialize the handler"}
     end
@@ -45,8 +45,8 @@ defmodule Maverick.Api.Initializer do
     {:stop, :normal, state}
   end
 
-  defp build_handler_module({api, _otp_app} = opts) do
-    handler_functions = generate_handler_functions(opts)
+  defp build_handler_module(api) do
+    handler_functions = generate_handler_functions(api)
 
     contents =
       quote location: :keep do
@@ -81,11 +81,9 @@ defmodule Maverick.Api.Initializer do
     :ok
   end
 
-  defp generate_handler_functions({api, app}) do
-    root_scope = api.root_scope()
-
+  defp generate_handler_functions(api) do
     contents =
-      for %{
+      for %Maverick.Route{
             args: arg_type,
             function: function,
             method: method,
@@ -94,11 +92,10 @@ defmodule Maverick.Api.Initializer do
             success_code: success,
             error_code: error
           } <-
-            get_routes(app) do
+            api.list_routes() do
         req_var = Macro.var(:req, __MODULE__)
-        full_path = root_scope ++ path
-        path_var = variablize_path(full_path)
-        path_var_map = path_var_map(full_path)
+        path_var = variablize_path(path)
+        path_var_map = path_var_map(path)
 
         quote location: :keep do
           alias Maverick.{Exception, Request}
@@ -137,26 +134,6 @@ defmodule Maverick.Api.Initializer do
       end
 
     quote location: :keep, bind_quoted: [contents: contents], do: contents
-  end
-
-  defp get_routes(app) do
-    :application.get_key(app, :modules)
-    |> filter_router_modules()
-    |> collect_route_info()
-  end
-
-  defp filter_router_modules({:ok, modules}) do
-    Enum.filter(modules, fn module ->
-      module
-      |> to_string
-      |> String.ends_with?(".Maverick.Router")
-    end)
-  end
-
-  defp collect_route_info(modules) do
-    Enum.reduce(modules, [], fn module, acc ->
-      acc ++ apply(module, :routes, [])
-    end)
   end
 
   defp variablize_path(path) do

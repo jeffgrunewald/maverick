@@ -20,14 +20,14 @@ defmodule Maverick.Api.Supervisor do
   Start the api supervisor, passing Api module, the `:otp_app` application
   name, and any options to configure the web server or the initializer.
   """
-  def start_link(api, otp_app, opts) do
+  def start_link(api, opts) do
     name = Keyword.get(opts, :supervisor_name, Module.concat(api, Supervisor))
 
-    Supervisor.start_link(__MODULE__, {api, otp_app, opts}, name: name)
+    Supervisor.start_link(__MODULE__, {api, opts}, name: name)
   end
 
   @impl true
-  def init({api, _otp_app, opts} = init_args) do
+  def init({api, opts} = init_args) do
     port = Keyword.get(opts, :port, 4000)
     handler = Module.concat(api, Handler)
 
