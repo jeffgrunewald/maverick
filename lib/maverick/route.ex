@@ -33,4 +33,49 @@ defmodule Maverick.Route do
     :raw_path,
     :success_code
   ]
+
+  @doc """
+  Takes an OTP app name and a root scope and returns a
+  list of all routes the app defines as %__MODULE__ structs.
+  """
+  @spec list_routes(Maverick.otp_app(), Maverick.root_scope()) :: [t()]
+  def list_routes(otp_app, root_scope) do
+    otp_app
+    |> :application.get_key(:modules)
+    |> filter_router_modules()
+    |> collect_route_info()
+    |> prepend_root_scope(root_scope)
+  end
+
+  defp filter_router_modules({:ok, modules}) do
+    Enum.filter(modules, fn module ->
+      module
+      |> to_string()
+      |> String.ends_with?(".Maverick.Router")
+    end)
+  end
+
+  defp collect_route_info(modules) do
+    Enum.reduce(modules, [], fn module, acc ->
+      acc ++ apply(module, :routes, [])
+    end)
+  end
+
+  defp prepend_root_scope(routes, root_scope) do
+    root_path = Maverick.Path.parse(root_scope)
+
+    root_raw_path =
+      case root_scope do
+        "/" -> ""
+        _ -> Maverick.Path.validate(root_scope)
+      end
+
+    Enum.map(routes, fn %Maverick.Route{path: path, raw_path: raw_path} = route ->
+      %Maverick.Route{
+        route
+        | path: root_path ++ path,
+          raw_path: root_raw_path <> raw_path
+      }
+    end)
+  end
 end

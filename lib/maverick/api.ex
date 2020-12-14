@@ -57,45 +57,7 @@ defmodule Maverick.Api do
         Maverick.Api.Supervisor.start_link(__MODULE__, opts)
       end
 
-      def list_routes() do
-        @otp_app
-        |> :application.get_key(:modules)
-        |> filter_router_modules()
-        |> collect_route_info()
-        |> prepend_root_scope(@root_scope)
-      end
-
-      defp filter_router_modules({:ok, modules}) do
-        Enum.filter(modules, fn module ->
-          module
-          |> to_string()
-          |> String.ends_with?(".Maverick.Router")
-        end)
-      end
-
-      defp collect_route_info(modules) do
-        Enum.reduce(modules, [], fn module, acc ->
-          acc ++ apply(module, :routes, [])
-        end)
-      end
-
-      defp prepend_root_scope(routes, root_scope) do
-        root_path = Maverick.Path.parse(root_scope)
-
-        root_raw_path =
-          case root_scope do
-            "/" -> ""
-            _ -> Maverick.Path.validate(root_scope)
-          end
-
-        Enum.map(routes, fn %Maverick.Route{path: path, raw_path: raw_path} = route ->
-          %Maverick.Route{
-            route
-            | path: root_path ++ path,
-              raw_path: root_raw_path <> raw_path
-          }
-        end)
-      end
+      def list_routes(), do: Maverick.Route.list_routes(@otp_app, @root_scope)
     end
   end
 end

@@ -40,7 +40,7 @@ defmodule Mix.Tasks.Mvk.Routes do
 
     routes
     |> Enum.map_join("", &format_route(&1, column_widths))
-    |> fn print_routes -> "\n" <> print_routes end.()
+    |> (fn print_routes -> "\n" <> print_routes end).()
     |> Mix.shell().info()
   end
 
@@ -82,7 +82,7 @@ defmodule Mix.Tasks.Mvk.Routes do
     %{args: args, function: func, method: method, module: mod, path: path} = route
     {method_len, path_len, mod_len, func_len} = column_widths
 
-      String.pad_leading(method, method_len) <>
+    String.pad_leading(method, method_len) <>
       "  " <>
       String.pad_trailing(path, path_len) <>
       "  " <>

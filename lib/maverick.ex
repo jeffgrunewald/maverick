@@ -5,6 +5,10 @@ defmodule Maverick do
              |> String.split("<!-- MDOC !-->")
              |> Enum.fetch!(1)
 
+  @type api :: module()
+  @type otp_app :: atom()
+  @type root_scope :: String.t()
+
   defmacro __using__(opts) do
     scope = Keyword.get(opts, :scope, "")
 
