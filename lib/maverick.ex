@@ -5,6 +5,10 @@ defmodule Maverick do
              |> String.split("<!-- MDOC !-->")
              |> Enum.fetch!(1)
 
+  @type api :: module()
+  @type otp_app :: atom()
+  @type root_scope :: String.t()
+
   defmacro __using__(opts) do
     scope = Keyword.get(opts, :scope, "")
 
@@ -33,17 +37,20 @@ defmodule Maverick do
         |> to_string()
         |> String.upcase()
 
-      path =
+      raw_path =
         [scope, path]
         |> Enum.join("/")
-        |> Maverick.Path.parse()
+        |> Maverick.Path.validate()
 
-      Module.put_attribute(module, :maverick_routes, %{
+      path = Maverick.Path.parse(raw_path)
+
+      Module.put_attribute(module, :maverick_routes, %Maverick.Route{
         module: module,
         function: name,
         args: arg_type,
         method: method,
         path: path,
+        raw_path: raw_path,
         success_code: success_code,
         error_code: error_code
       })

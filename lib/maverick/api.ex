@@ -43,7 +43,7 @@ defmodule Maverick.Api do
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       @otp_app Keyword.fetch!(opts, :otp_app)
-      @root_scope opts |> Keyword.get(:root_scope, "/") |> Maverick.Path.parse()
+      @root_scope opts |> Keyword.get(:root_scope, "/")
 
       def child_spec(opts) do
         %{
@@ -54,10 +54,10 @@ defmodule Maverick.Api do
       end
 
       def start_link(opts \\ []) do
-        Maverick.Api.Supervisor.start_link(__MODULE__, @otp_app, opts)
+        Maverick.Api.Supervisor.start_link(__MODULE__, opts)
       end
 
-      def root_scope(), do: @root_scope
+      def list_routes(), do: Maverick.Route.list_routes(@otp_app, @root_scope)
     end
   end
 end
