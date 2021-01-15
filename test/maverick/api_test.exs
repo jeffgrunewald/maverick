@@ -71,7 +71,7 @@ defmodule Maverick.ApiTest do
 
       assert 404 == resp_code(resp)
       assert resp_content_type(resp)
-      assert "Not Found" == resp_body(resp)
+      assert %{"error_code" => 404, "error_message" => "Not Found"} == resp_body(resp)
     end
 
     test "handles error tuples from internal functions" do
