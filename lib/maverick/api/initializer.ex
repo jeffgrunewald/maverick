@@ -67,9 +67,10 @@ defmodule Maverick.Api.Initializer do
 
         def handle(method, path, req) do
           Logger.info(fn -> "Unhandled request received : #{inspect(req)}" end)
-          error_code = 404
-          error_response = %{error_code: error_code, error_message: "Not Found"}
-          {error_code, [Maverick.Request.Util.content_type()], Jason.encode!(error_response)}
+          error_response = %{error_code: 404, error_message: "Not Found"}
+
+          {error_response.error_code, [Maverick.Request.Util.content_type()],
+           Jason.encode!(error_response)}
         end
 
         @impl true
