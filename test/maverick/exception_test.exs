@@ -2,9 +2,10 @@ defmodule Maverick.ExceptionTest do
   use ExUnit.Case
 
   @host "http://localhost:4000"
+  @headers [{"content-type", "application/json"}]
 
   setup_all do
-    start_supervised({Maverick.TestApi, []})
+    start_supervised!({Plug.Cowboy, scheme: :http, plug: Maverick.TestApi, options: [port: 4000]})
 
     :ok
   end
@@ -12,7 +13,7 @@ defmodule Maverick.ExceptionTest do
   describe "handles exceptions" do
     test "default fallback impl for unexpected exceptions" do
       bad_body = %{num1: 2, num2: "three"} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/route1/multiply", [], bad_body)
+      resp = :hackney.post("#{@host}/api/v1/route1/multiply", @headers, bad_body)
 
       assert 500 == resp_code(resp)
 
@@ -42,7 +43,7 @@ defmodule Maverick.ExceptionTest do
 
     test "custom exception handling" do
       illegal_body = %{"color" => "red"} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/route1/color_match", [], illegal_body)
+      resp = :hackney.post("#{@host}/api/v1/route1/color_match", @headers, illegal_body)
 
       assert 406 = resp_code(resp)
 

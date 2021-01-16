@@ -42,8 +42,10 @@ defmodule Maverick.Api do
 
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
+      @behaviour Plug
       @otp_app Keyword.fetch!(opts, :otp_app)
       @root_scope opts |> Keyword.get(:root_scope, "/")
+      @router Module.concat(__MODULE__, Router)
 
       def child_spec(opts) do
         %{
@@ -58,6 +60,23 @@ defmodule Maverick.Api do
       end
 
       def list_routes(), do: Maverick.Route.list_routes(@otp_app, @root_scope)
+
+      def router() do
+        @router
+      end
+
+      def init(opts) do
+        Maverick.Api.Initializer.init(__MODULE__)
+        apply(@router, :init, [opts])
+      end
+
+      def call(conn, opts) do
+        apply(@router, :call, [conn, opts])
+      rescue
+        e ->
+          IO.inspect(e, label: "Unknown error")
+          raise e
+      end
     end
   end
 end

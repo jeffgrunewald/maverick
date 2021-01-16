@@ -3,9 +3,13 @@ defmodule Maverick.ApiTest do
 
   @host "http://localhost:4000"
 
+  @headers [{"content-type", "application/json"}]
+
   describe "serves the handled routes" do
     setup do
-      start_supervised({Maverick.TestApi, []})
+      start_supervised!(
+        {Plug.Cowboy, scheme: :http, plug: Maverick.TestApi, options: [port: 4000]}
+      )
 
       :ok
     end
@@ -20,7 +24,7 @@ defmodule Maverick.ApiTest do
 
     test "POST request with custom error code" do
       body = %{num1: 2, num2: 3} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/route1/multiply", [], body)
+      resp = :hackney.post("#{@host}/api/v1/route1/multiply", @headers, body)
 
       assert 200 == resp_code(resp)
       assert resp_content_type(resp)
@@ -31,7 +35,7 @@ defmodule Maverick.ApiTest do
       resp =
         :hackney.post(
           "#{@host}/api/v1/route2/fly/me/to/the",
-          [{"Space-Rocket", "brrr"}],
+          @headers ++ [{"space-rocket", "brrr"}],
           ""
         )
 
@@ -39,12 +43,12 @@ defmodule Maverick.ApiTest do
 
       assert 200 == resp_code(resp)
       assert resp_content_type(resp)
-      assert {"Space-Rocket", "BRRR"} in resp_headers(resp)
+      assert {"space-rocket", "brrr"} in resp_headers(resp)
       assert destination in ["moon", "mars", "stars"]
     end
 
     test "PUT requests with query params" do
-      resp = :hackney.put("#{@host}/api/v1/route2/clock/now?timezone=Etc/UTC")
+      resp = :hackney.put("#{@host}/api/v1/route2/clock/now?timezone=Etc/UTC", @headers)
 
       {:ok, %DateTime{} = time, _} = resp |> resp_body() |> DateTime.from_iso8601()
 
@@ -56,7 +60,9 @@ defmodule Maverick.ApiTest do
 
   describe "supplies error results" do
     setup do
-      start_supervised({Maverick.TestApi, []})
+      start_supervised!(
+        {Plug.Cowboy, scheme: :http, plug: Maverick.TestApi, options: [port: 4000]}
+      )
 
       :ok
     end
@@ -65,7 +71,7 @@ defmodule Maverick.ApiTest do
       resp =
         :hackney.post(
           "#{@host}/api/v1/route1/gimme/that/data",
-          [],
+          @headers,
           %{"magic_word" => "please"} |> Jason.encode!()
         )
 
@@ -76,35 +82,11 @@ defmodule Maverick.ApiTest do
 
     test "handles error tuples from internal functions" do
       body = %{num1: 25, num2: 2} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/route1/multiply", [], body)
+      resp = :hackney.post("#{@host}/api/v1/route1/multiply", @headers, body)
 
       assert 403 == resp_code(resp)
       assert resp_content_type(resp)
-      assert "illegal operation" == resp_body(resp)
-    end
-  end
-
-  describe "ssl" do
-    setup do
-      cert = Path.expand("../support/cert.pem", __DIR__)
-      key = Path.expand("../support/key.pem", __DIR__)
-      opts = [name: :maverick_secure, port: 4443, tls_certfile: cert, tls_keyfile: key]
-
-      start_supervised({Maverick.TestApi, opts})
-
-      :ok
-    end
-
-    test "handles secured connections" do
-      server = Process.whereis(:maverick_secure)
-      assert is_pid(server)
-
-      body = %{num1: 4, num2: 4} |> Jason.encode!()
-      resp = :hackney.post("https://localhost:4443/api/v1/route1/multiply", [], body, [:insecure])
-
-      assert 200 == resp_code(resp)
-      assert resp_content_type(resp)
-      assert %{"product" => 16} == resp_body(resp)
+      assert %{"error_code" => 403, "error_message" => "illegal operation"} == resp_body(resp)
     end
   end
 
@@ -118,6 +100,6 @@ defmodule Maverick.ApiTest do
   end
 
   defp resp_content_type(resp) do
-    {"Content-Type", "application/json"} in resp_headers(resp)
+    {"content-type", "application/json"} in resp_headers(resp)
   end
 end

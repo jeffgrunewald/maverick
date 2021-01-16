@@ -1,171 +1,145 @@
 defmodule Maverick.Api.Initializer do
   @moduledoc false
 
-  # The Initializer implements a GenServer that reads and constructs the
-  # webserver callback Handler module based on the route information exported
-  # at compile time. It constructs a module named by concatenating the name
-  # of the implementing application's Api module (example: MyApp.Api) and Handler
-  # which is passed to Elli's start_link as the value of the `:callback` config
-  # (`callback: MyApp.Api.Handler`).
-  #
-  # The Initializer's only job is to call the function that constructs the AST
-  # for the Handler module and writing it out before exiting with a `:normal` status.
-  # The Handler module implements a simple `c:handle/2` for the Elli behaviour that
-  # uses the request method and path to route the request to the correct `handle/3`
-  # function which is generated for each annotated internal function with a `@route`
-  # attribute. It also generates a fall-through `handle/3` and the `c:handle_event/3`
-  # function required by the Elli behaviour.
-  #
-  # This module is not intended for direct consumption by the application
-  # implementing Maverick and is instead accessed indirectly by the module that
-  # implements `use Maverick.Api`.
-
-  use GenServer, restart: :transient
-
-  @doc """
-  Starts the Initializer, passing a tuple containing the module implementing
-  the `Maverick.Api`, the `:otp_app` for the application and any options.
-  """
-  def start_link({api, opts}) do
-    name = Keyword.get(opts, :init_name, Module.concat(api, Initializer))
-
-    GenServer.start_link(__MODULE__, api, name: name)
-  end
-
-  @impl true
   def init(api) do
-    case build_handler_module(api) do
+    case build_router_module(api) do
       :ok -> {:ok, nil, {:continue, :exit}}
       _ -> {:error, "Failed to initialize the handler"}
     end
   end
 
-  @impl true
-  def handle_continue(:exit, state) do
-    {:stop, :normal, state}
-  end
-
-  defp build_handler_module(api) do
-    handler_functions = generate_handler_functions(api)
-
+  defp build_router_module(api) do
     contents =
       quote location: :keep do
-        @behaviour :elli_handler
+        use Plug.Router
 
         require Logger
 
-        @impl true
-        def handle(request, _args) do
-          handle(
-            :elli_request.method(request) |> to_string(),
-            :elli_request.path(request),
-            request
-          )
+        plug(Plug.Parsers, parsers: [:urlencoded, :json], pass: ["text/*"], json_decoder: Jason)
+
+        plug(:match)
+        plug(:dispatch)
+
+        unquote(generate_match_functions(api.list_routes()))
+
+        match _ do
+          response =
+            %{error_code: 404, error_message: "Not Found"}
+            |> Jason.encode!()
+
+          var!(conn)
+          |> put_resp_content_type("application/json", nil)
+          |> send_resp(404, response)
         end
-
-        unquote(handler_functions)
-
-        def handle(method, path, req) do
-          Logger.info(fn -> "Unhandled request received : #{inspect(req)}" end)
-          error_response = %{error_code: 404, error_message: "Not Found"}
-
-          {error_response.error_code, [Maverick.Request.Util.content_type()],
-           Jason.encode!(error_response)}
-        end
-
-        @impl true
-        def handle_event(_event, _data, _args), do: :ok
       end
 
-    api
-    |> Module.concat(Handler)
+    api.router()
     |> Module.create(contents, Macro.Env.location(__ENV__))
-
-    :ok
   end
 
-  defp generate_handler_functions(api) do
-    contents =
-      for %Maverick.Route{
-            args: arg_type,
-            function: function,
-            method: method,
-            module: module,
-            path: path,
-            success_code: success,
-            error_code: error
-          } <-
-            api.list_routes() do
-        req_var = Macro.var(:req, __MODULE__)
-        path_var = variablize_path(path)
-        path_var_map = path_var_map(path)
+  defp generate_match_functions(routes) do
+    for %Maverick.Route{
+          args: arg_type,
+          function: function,
+          method: method,
+          module: module,
+          raw_path: path,
+          success_code: success,
+          error_code: error
+        } <-
+          routes do
+      method_macro = method |> String.downcase() |> String.to_atom()
 
+      result =
         quote location: :keep do
-          alias Maverick.{Exception, Request}
+          unquote(method_macro)(unquote(path)) do
+            try do
+              arg = Maverick.Api.Initializer.decode_arg_type(var!(conn), unquote(arg_type))
+              response = apply(unquote(module), unquote(function), [arg])
 
-          def handle(unquote(method), unquote(path_var), unquote(req_var)) do
-            args =
-              unquote(req_var)
-              |> Request.new(unquote(path_var_map))
-              |> Request.Util.args(unquote(arg_type))
+              Maverick.Api.Initializer.wrap_response(
+                var!(conn),
+                response,
+                unquote(success),
+                unquote(error)
+              )
+            rescue
+              exception ->
+                %{tag: tag, handler: {mod, func, args}} = Maverick.Exception.fallback(exception)
 
-            response =
-              unquote(module)
-              |> apply(unquote(function), [args])
-              |> Request.Util.wrap_response(unquote(success), unquote(error))
+                Logger.info(fn ->
+                  "#{inspect(exception)} encountered processing request #{inspect(var!(conn))}; falling back to #{
+                    tag
+                  }"
+                end)
 
-            Logger.debug(fn -> "Handled request #{inspect(unquote(req_var))}" end)
+                response = apply(mod, func, args)
 
-            response
-          rescue
-            exception ->
-              %{tag: tag, handler: {mod, func, args}} = Exception.fallback(exception)
-
-              Logger.info(fn ->
-                "#{inspect(exception)} encountered processing request #{inspect(unquote(req_var))}; falling back to #{
-                  tag
-                }"
-              end)
-
-              {
-                Exception.error_code(exception),
-                [Request.Util.content_type()],
-                apply(mod, func, args)
-              }
+                var!(conn)
+                |> Plug.Conn.put_resp_content_type("application/json", nil)
+                |> Plug.Conn.send_resp(Maverick.Exception.error_code(exception), response)
+            end
           end
         end
-      end
 
-    quote location: :keep, bind_quoted: [contents: contents], do: contents
+      result
+    end
   end
 
-  defp variablize_path(path) do
-    Enum.map(path, fn element ->
-      case element do
-        {:variable, variable} ->
-          variable
-          |> String.to_atom()
-          |> Macro.var(__MODULE__)
+  def to_request(conn) do
+    %Maverick.Request{
+      body: nil,
+      body_params: conn.params,
+      headers: conn.req_headers |> Enum.into(%{}),
+      host: conn.host,
+      method: conn.method |> to_string(),
+      params: conn.params,
+      path: conn.request_path,
+      path_params: conn.path_params,
+      port: conn.port,
+      query_params: conn.query_params,
+      raw_path: conn.request_path,
+      remote_ip: conn.remote_ip,
+      scheme: conn.scheme,
+      socket: nil,
+      version: nil
+    }
+  end
 
-        _ ->
-          element
-      end
+  def wrap_response(conn, {:ok, headers, response}, success, _error) do
+    conn
+    |> Plug.Conn.put_resp_content_type("application/json", nil)
+    |> add_headers(headers)
+    |> Plug.Conn.send_resp(success, Jason.encode!(response))
+  end
+
+  def wrap_response(conn, {:error, error_message}, _success, error) do
+    response =
+      %{error_code: error, error_message: error_message}
+      |> Jason.encode!()
+
+    conn
+    |> Plug.Conn.put_resp_content_type("application/json", nil)
+    |> Plug.Conn.send_resp(error, response)
+  end
+
+  def wrap_response(conn, response, success, _error) do
+    conn
+    |> Plug.Conn.put_resp_content_type("application/json", nil)
+    |> Plug.Conn.send_resp(success, Jason.encode!(response))
+  end
+
+  def decode_arg_type(conn, :request) do
+    Maverick.Api.Initializer.to_request(conn)
+  end
+
+  def decode_arg_type(conn, _) do
+    Map.get(conn, :params)
+  end
+
+  defp add_headers(conn, headers) do
+    Enum.reduce(headers, conn, fn {key, value}, conn ->
+      Plug.Conn.put_resp_header(conn, key, value)
     end)
-  end
-
-  defp path_var_map(path) do
-    entries =
-      Enum.reduce(path, [], fn element, acc ->
-        case element do
-          {:variable, variable} ->
-            value = variable |> String.to_atom() |> Macro.var(__MODULE__)
-            [{variable, value} | acc]
-
-          _ ->
-            acc
-        end
-      end)
-
-    {:%{}, [], entries}
   end
 end
