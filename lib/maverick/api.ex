@@ -42,7 +42,7 @@ defmodule Maverick.Api do
 
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
-      @behaviour Plug
+      use Plug.Builder
       @otp_app Keyword.fetch!(opts, :otp_app)
       @root_scope opts |> Keyword.get(:root_scope, "/")
       @router Module.concat(__MODULE__, Router)
@@ -71,6 +71,7 @@ defmodule Maverick.Api do
       end
 
       def call(conn, opts) do
+        conn = super(conn, opts)
         apply(@router, :call, [conn, opts])
       rescue
         e ->
