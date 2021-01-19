@@ -66,7 +66,7 @@ defmodule Maverick.Api do
       end
 
       def init(opts) do
-        Maverick.Api.Initializer.init(__MODULE__)
+        Maverick.Api.Generator.generate_router(__MODULE__)
         apply(@router, :init, [opts])
       end
 

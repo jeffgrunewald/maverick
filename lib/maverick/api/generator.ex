@@ -1,9 +1,9 @@
-defmodule Maverick.Api.Initializer do
+defmodule Maverick.Api.Generator do
   @moduledoc false
 
-  def init(api) do
+  def generate_router(api) do
     case build_router_module(api) do
-      :ok -> {:ok, nil, {:continue, :exit}}
+      :ok -> :ok
       _ -> {:error, "Failed to initialize the handler"}
     end
   end
@@ -15,7 +15,7 @@ defmodule Maverick.Api.Initializer do
 
         require Logger
 
-        plug(Plug.Parsers, parsers: [:urlencoded, :json], pass: ["text/*"], json_decoder: Jason)
+        plug(Plug.Parsers, parsers: [:json], pass: ["text/*"], json_decoder: Jason)
 
         plug(:match)
         plug(:dispatch)
@@ -54,10 +54,10 @@ defmodule Maverick.Api.Initializer do
         quote location: :keep do
           unquote(method_macro)(unquote(path)) do
             try do
-              arg = Maverick.Api.Initializer.decode_arg_type(var!(conn), unquote(arg_type))
+              arg = Maverick.Api.Generator.decode_arg_type(var!(conn), unquote(arg_type))
               response = apply(unquote(module), unquote(function), [arg])
 
-              Maverick.Api.Initializer.wrap_response(
+              Maverick.Api.Generator.wrap_response(
                 var!(conn),
                 response,
                 unquote(success),
@@ -86,26 +86,6 @@ defmodule Maverick.Api.Initializer do
     end
   end
 
-  def to_request(conn) do
-    %Maverick.Request{
-      body: nil,
-      body_params: conn.params,
-      headers: conn.req_headers |> Enum.into(%{}),
-      host: conn.host,
-      method: conn.method |> to_string(),
-      params: conn.params,
-      path: conn.request_path,
-      path_params: conn.path_params,
-      port: conn.port,
-      query_params: conn.query_params,
-      raw_path: conn.request_path,
-      remote_ip: conn.remote_ip,
-      scheme: conn.scheme,
-      socket: nil,
-      version: nil
-    }
-  end
-
   def wrap_response(conn, {:ok, headers, response}, success, _error) do
     conn
     |> Plug.Conn.put_resp_content_type("application/json", nil)
@@ -129,8 +109,8 @@ defmodule Maverick.Api.Initializer do
     |> Plug.Conn.send_resp(success, Jason.encode!(response))
   end
 
-  def decode_arg_type(conn, :request) do
-    Maverick.Api.Initializer.to_request(conn)
+  def decode_arg_type(conn, :conn) do
+    conn
   end
 
   def decode_arg_type(conn, _) do

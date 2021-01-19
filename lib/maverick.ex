@@ -96,5 +96,5 @@ defmodule Maverick do
     do: {:required_params, Enum.map(list, &to_string/1)}
 
   defp validate_arg_type(:params), do: :params
-  defp validate_arg_type(:request), do: :request
+  defp validate_arg_type(:conn), do: :conn
 end

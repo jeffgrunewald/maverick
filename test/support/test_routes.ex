@@ -49,12 +49,14 @@ end
 defmodule Maverick.TestRoute2 do
   use Maverick, scope: "/route2"
 
-  @route path: "fly/me/to/the", args: :request
-  def come_fly_with_me(req) do
+  @route path: "fly/me/to/the", args: :conn
+  def come_fly_with_me(conn) do
     destination = Enum.random(["moon", "mars", "stars"])
 
     response_header =
-      Map.update(req.headers, "Space-Rocket", "BLASTOFF", fn val -> String.upcase(val) end)
+      conn.req_headers
+      |> Map.new()
+      |> Map.update("Space-Rocket", "BLASTOFF", fn val -> String.upcase(val) end)
       |> Map.drop(["Content-Length"])
 
     {:ok, response_header, %{"destination" => destination}}
