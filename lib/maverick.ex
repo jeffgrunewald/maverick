@@ -12,12 +12,44 @@ defmodule Maverick do
   defmacro __using__(opts) do
     scope = Keyword.get(opts, :scope, "")
 
-    quote do
+    quote location: :keep do
+      use Plug.Builder
+
+      require Logger
+
       Module.register_attribute(__MODULE__, :maverick_routes, accumulate: true)
       Module.put_attribute(__MODULE__, :maverick_route_scope, unquote(scope))
 
       @on_definition Maverick
       @before_compile Maverick
+
+      def call(%Plug.Conn{private: %{maverick_route: route}} = conn, _opts) do
+        conn = super(conn, route)
+        arg = Maverick.Api.Generator.decode_arg_type(conn, route.args)
+        response = apply(__MODULE__, route.function, [arg])
+
+        Maverick.Api.Generator.wrap_response(
+          conn,
+          response,
+          route.success_code,
+          route.error_code
+        )
+      rescue
+        exception ->
+          %{tag: tag, handler: {mod, func, args}} = Maverick.Exception.fallback(exception)
+
+          Logger.info(fn ->
+            "#{inspect(exception)} encountered processing request #{inspect(conn)}; falling back to #{
+              tag
+            }"
+          end)
+
+          response = apply(mod, func, args)
+
+          conn
+          |> Plug.Conn.put_resp_content_type("application/json", nil)
+          |> Plug.Conn.send_resp(Maverick.Exception.error_code(exception), response)
+      end
     end
   end
 

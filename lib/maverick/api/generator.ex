@@ -46,39 +46,16 @@ defmodule Maverick.Api.Generator do
           raw_path: path,
           success_code: success,
           error_code: error
-        } <-
+        } = route <-
           routes do
       method_macro = method |> String.downcase() |> String.to_atom()
+      escaped_route = Macro.escape(route)
 
       result =
         quote location: :keep do
           unquote(method_macro)(unquote(path)) do
-            try do
-              arg = Maverick.Api.Generator.decode_arg_type(var!(conn), unquote(arg_type))
-              response = apply(unquote(module), unquote(function), [arg])
-
-              Maverick.Api.Generator.wrap_response(
-                var!(conn),
-                response,
-                unquote(success),
-                unquote(error)
-              )
-            rescue
-              exception ->
-                %{tag: tag, handler: {mod, func, args}} = Maverick.Exception.fallback(exception)
-
-                Logger.info(fn ->
-                  "#{inspect(exception)} encountered processing request #{inspect(var!(conn))}; falling back to #{
-                    tag
-                  }"
-                end)
-
-                response = apply(mod, func, args)
-
-                var!(conn)
-                |> Plug.Conn.put_resp_content_type("application/json", nil)
-                |> Plug.Conn.send_resp(Maverick.Exception.error_code(exception), response)
-            end
+            var!(conn) = merge_private(var!(conn), maverick_route: unquote(escaped_route))
+            apply(unquote(module), :call, [var!(conn), []])
           end
         end
 
