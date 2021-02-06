@@ -15,9 +15,8 @@ defmodule Maverick.Api.Generator do
 
         require Logger
 
-        plug(Plug.Parsers, parsers: [:json], pass: ["text/*"], json_decoder: Jason)
-
         plug(:match)
+        plug(Plug.Parsers, parsers: [:json], pass: ["text/*"], json_decoder: Jason)
         plug(:dispatch)
 
         unquote(generate_match_functions(api.list_routes()))

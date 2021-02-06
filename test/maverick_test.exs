@@ -30,7 +30,7 @@ defmodule MaverickTest do
              method: "POST",
              path: ["route2", "fly", "me", "to", "the"],
              raw_path: "/route2/fly/me/to/the",
-             args: :request,
+             args: :conn,
              error_code: 404,
              success_code: 200
            } in Maverick.TestRoute2.Maverick.Router.routes()

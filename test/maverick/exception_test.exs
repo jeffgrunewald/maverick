@@ -37,7 +37,7 @@ defmodule Maverick.ExceptionTest do
       assert %{
                "error_code" => 400,
                "error_message" =>
-                 "Invalid request body : unexpected byte at position 0: 0x66 ('f')"
+                 "Unsupported media type: application/x-www-form-urlencoded"
              } == resp_body(resp)
     end
 
@@ -61,6 +61,6 @@ defmodule Maverick.ExceptionTest do
   end
 
   defp resp_content_type(resp) do
-    {"Content-Type", "application/json"} in resp_headers(resp)
+    {"content-type", "application/json"} in resp_headers(resp)
   end
 end

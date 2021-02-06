@@ -43,6 +43,7 @@ defmodule Maverick.Api do
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       use Plug.Builder
+      require Logger
       @otp_app Keyword.fetch!(opts, :otp_app)
       @root_scope opts |> Keyword.get(:root_scope, "/")
       @router Module.concat(__MODULE__, Router)
@@ -74,9 +75,33 @@ defmodule Maverick.Api do
         conn = super(conn, opts)
         apply(@router, :call, [conn, opts])
       rescue
-        e ->
-          IO.inspect(e, label: "Unknown error")
-          raise e
+        exception ->
+          handle_exception(conn, exception)
+      end
+
+      defp handle_exception(_conn, %Plug.Conn.WrapperError{conn: conn, reason: exception}) do
+        handle_exception(conn, exception)
+      end
+
+      defp handle_exception(conn, error) when is_atom(error) do
+        exception = Exception.normalize(:error, error)
+        handle_exception(conn, exception)
+      end
+
+      defp handle_exception(conn, exception) do
+        %{tag: tag, handler: {mod, func, args}} = Maverick.Exception.fallback(exception)
+
+        Logger.info(fn ->
+          "#{inspect(exception)} encountered processing request #{inspect(conn)}; falling back to #{
+            tag
+          }"
+        end)
+
+        response = apply(mod, func, args)
+
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json", nil)
+        |> Plug.Conn.send_resp(Maverick.Exception.error_code(exception), response)
       end
     end
   end

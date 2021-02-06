@@ -34,21 +34,6 @@ defmodule Maverick do
           route.success_code,
           route.error_code
         )
-      rescue
-        exception ->
-          %{tag: tag, handler: {mod, func, args}} = Maverick.Exception.fallback(exception)
-
-          Logger.info(fn ->
-            "#{inspect(exception)} encountered processing request #{inspect(conn)}; falling back to #{
-              tag
-            }"
-          end)
-
-          response = apply(mod, func, args)
-
-          conn
-          |> Plug.Conn.put_resp_content_type("application/json", nil)
-          |> Plug.Conn.send_resp(Maverick.Exception.error_code(exception), response)
       end
     end
   end

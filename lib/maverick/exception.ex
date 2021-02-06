@@ -75,3 +75,21 @@ defmodule Maverick.BadRequestError do
 
   defexception message: "could not process the request due to client error", error_code: 400
 end
+
+defimpl Maverick.Exception, for: Plug.Parsers.UnsupportedMediaTypeError do
+  def error_code(_), do: 400
+
+  def fallback(exception) do
+    %{
+      tag: :unsupported_media_type,
+      handler: {__MODULE__, :handler, [exception]}
+    }
+  end
+
+  def handler(exception) do
+    Jason.encode!(%{
+      error_code: 400,
+      error_message: "Unsupported media type: #{exception.media_type}"
+    })
+  end
+end
