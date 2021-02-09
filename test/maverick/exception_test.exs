@@ -36,8 +36,7 @@ defmodule Maverick.ExceptionTest do
 
       assert %{
                "error_code" => 400,
-               "error_message" =>
-                 "Unsupported media type: application/x-www-form-urlencoded"
+               "error_message" => "Unsupported media type: application/x-www-form-urlencoded"
              } == resp_body(resp)
     end
 

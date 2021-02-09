@@ -89,19 +89,7 @@ defmodule Maverick.Api do
       end
 
       defp handle_exception(conn, exception) do
-        %{tag: tag, handler: {mod, func, args}} = Maverick.Exception.fallback(exception)
-
-        Logger.info(fn ->
-          "#{inspect(exception)} encountered processing request #{inspect(conn)}; falling back to #{
-            tag
-          }"
-        end)
-
-        response = apply(mod, func, args)
-
-        conn
-        |> Plug.Conn.put_resp_content_type("application/json", nil)
-        |> Plug.Conn.send_resp(Maverick.Exception.error_code(exception), response)
+        Maverick.Exception.handle(exception, conn)
       end
     end
   end

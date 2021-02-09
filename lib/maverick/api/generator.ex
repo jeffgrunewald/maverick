@@ -2,10 +2,7 @@ defmodule Maverick.Api.Generator do
   @moduledoc false
 
   def generate_router(api) do
-    case build_router_module(api) do
-      :ok -> :ok
-      _ -> {:error, "Failed to initialize the handler"}
-    end
+    build_router_module(api)
   end
 
   defp build_router_module(api) do
@@ -38,13 +35,13 @@ defmodule Maverick.Api.Generator do
 
   defp generate_match_functions(routes) do
     for %Maverick.Route{
-          args: arg_type,
-          function: function,
+          args: _arg_type,
+          function: _function,
           method: method,
           module: module,
           raw_path: path,
-          success_code: success,
-          error_code: error
+          success_code: _success,
+          error_code: _error
         } = route <-
           routes do
       method_macro = method |> String.downcase() |> String.to_atom()
