@@ -42,8 +42,11 @@ defmodule Maverick.Api do
 
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
+      use Plug.Builder
+      require Logger
       @otp_app Keyword.fetch!(opts, :otp_app)
       @root_scope opts |> Keyword.get(:root_scope, "/")
+      @router Module.concat(__MODULE__, Router)
 
       def child_spec(opts) do
         %{
@@ -58,6 +61,36 @@ defmodule Maverick.Api do
       end
 
       def list_routes(), do: Maverick.Route.list_routes(@otp_app, @root_scope)
+
+      def router() do
+        @router
+      end
+
+      def init(opts) do
+        Maverick.Api.Generator.generate_router(__MODULE__)
+        apply(@router, :init, [opts])
+      end
+
+      def call(conn, opts) do
+        conn = super(conn, opts)
+        apply(@router, :call, [conn, opts])
+      rescue
+        exception ->
+          handle_exception(conn, exception)
+      end
+
+      defp handle_exception(_conn, %Plug.Conn.WrapperError{conn: conn, reason: exception}) do
+        handle_exception(conn, exception)
+      end
+
+      defp handle_exception(conn, error) when is_atom(error) do
+        exception = Exception.normalize(:error, error)
+        handle_exception(conn, exception)
+      end
+
+      defp handle_exception(conn, exception) do
+        Maverick.Exception.handle(exception, conn)
+      end
     end
   end
 end

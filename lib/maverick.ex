@@ -12,12 +12,29 @@ defmodule Maverick do
   defmacro __using__(opts) do
     scope = Keyword.get(opts, :scope, "")
 
-    quote do
+    quote location: :keep do
+      use Plug.Builder
+
+      require Logger
+
       Module.register_attribute(__MODULE__, :maverick_routes, accumulate: true)
       Module.put_attribute(__MODULE__, :maverick_route_scope, unquote(scope))
 
       @on_definition Maverick
       @before_compile Maverick
+
+      def call(%Plug.Conn{private: %{maverick_route: route}} = conn, _opts) do
+        conn = super(conn, route)
+        arg = Maverick.Api.Generator.decode_arg_type(conn, route.args)
+        response = apply(__MODULE__, route.function, [arg])
+
+        Maverick.Api.Generator.wrap_response(
+          conn,
+          response,
+          route.success_code,
+          route.error_code
+        )
+      end
     end
   end
 
@@ -96,5 +113,5 @@ defmodule Maverick do
     do: {:required_params, Enum.map(list, &to_string/1)}
 
   defp validate_arg_type(:params), do: :params
-  defp validate_arg_type(:request), do: :request
+  defp validate_arg_type(:conn), do: :conn
 end
