@@ -33,10 +33,10 @@ defmodule Maverick.MixProject do
       {:plug, "~> 1.11"},
       {:jason, "~> 1.2"},
       {:nimble_parsec, "~> 1.1", optional: true},
-      {:dialyxir, "~> 1.0.0", only: [:dev], runtime: false},
-      {:hackney, "~> 1.16", only: :test},
-      {:plug_cowboy, "~> 2.4", only: :test},
-      {:ex_doc, "~> 0.23", only: :dev, runtime: false}
+      {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
+      {:hackney, "~> 1.17", only: :test},
+      {:plug_cowboy, "~> 2.5", only: :test},
+      {:ex_doc, "~> 0.24", only: :dev, runtime: false}
     ]
   end
 
