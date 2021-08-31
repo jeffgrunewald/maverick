@@ -150,7 +150,7 @@ The package can be installed by adding `maverick` to your list of dependencies i
 ```elixir
 def deps do
   [
-    {:maverick, "~> 0.1.0"}
+    {:maverick, "~> 0.2.0"}
   ]
 end
 ```
