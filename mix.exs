@@ -18,7 +18,7 @@ defmodule Maverick.MixProject do
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
-      dialyzer: [plt_add_apps: [:mix], plt_file: {:no_warn, ".dialyzer/#{System.version()}.plt"}],
+      dialyzer: dialyzer(),
       docs: docs()
     ]
   end
@@ -43,6 +43,13 @@ defmodule Maverick.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp dialyzer() do
+    [
+      plt_add_apps: [:mix],
+      plt_file: {:no_warn, ".dialyzer/#{System.version()}.plt"}
+    ]
+  end
 
   defp package do
     %{
