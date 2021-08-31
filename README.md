@@ -6,13 +6,13 @@ Web API framework with a need for speed
 
 ## Use
 
-Maverick builds on top of the [Elli](https://github.com/elli-lib/elli) webserver and creates
+Maverick builds on top of the `Plug.Conn.Adapter` for your supported webserver and creates
 the webserver handler by reading annotations on functions you want to expose as part of your API. To publish a function, add `use Maverick` to your module and the `@route` attribute to
 the relevant functions. Pass a keyword list of options to the route attribute including the
 `:path` and you're off to the races.
 
 Once you add the `Maverick.Api` to your application supervision tree and start the app,
-Maverick compiles your routes into an Elli handler module and sends incoming requests
+Maverick compiles your routes into a handler module and sends incoming requests
 to your functions, taking care to wrap the return values accordingly.
 
 ### Example
@@ -133,14 +133,14 @@ is great, but sometimes you just want a way to handle JSON-based service request
 HTTP without all the bells and whistles.
 
 Maverick aims to fill the niche between a full Phoenix Framework just for providing a
-web-based API and hand-rolling a Plug API while backing your service with the super-performant
-[Elli](https://github.com/elli-lib/elli) webserver.
+web-based API and hand-rolling a Plug API.
 
 ## To Do
 - [X] Make it work
-- [ ] Telemetry integration via Elli handler's `handle_event/3` callback
-- [ ] Implement basic auth middleware hooks in the API module
-- [ ] Absinthe/GraphQL integration
+- [ ] Support Elli webserver
+- [ ] Native telemetry integration
+- [X] Implement basic auth middleware hooks in the API module (via Plug support)
+- [X] Absinthe/GraphQL integration (via Plug support)
 - [ ] Profit?
 
 ## Installation
