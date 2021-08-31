@@ -30,13 +30,13 @@ defmodule Maverick.MixProject do
 
   defp deps do
     [
-      {:plug, "~> 1.11"},
+      {:plug, "~> 1.12"},
       {:jason, "~> 1.2"},
       {:nimble_parsec, "~> 1.1", optional: true},
       {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
       {:hackney, "~> 1.17", only: :test},
       {:plug_cowboy, "~> 2.5", only: :test},
-      {:ex_doc, "~> 0.24", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.25", only: :dev, runtime: false}
     ]
   end
 
