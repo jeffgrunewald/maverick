@@ -2,7 +2,7 @@ defmodule Maverick.MixProject do
   use Mix.Project
 
   @name "Maverick"
-  @version "0.1.0"
+  @version "0.2.0"
   @repo "https://github.com/jeffgrunewald/maverick"
 
   def project do
