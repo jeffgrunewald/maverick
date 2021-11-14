@@ -57,7 +57,6 @@ defmodule Maverick.TestRoute2 do
       conn.req_headers
       |> Map.new()
       |> Map.update("Space-Rocket", "BLASTOFF", fn val -> String.upcase(val) end)
-      |> Map.drop(["Content-Length"])
 
     {:ok, response_header, %{"destination" => destination}}
   end
