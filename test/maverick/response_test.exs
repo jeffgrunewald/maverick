@@ -12,22 +12,25 @@ defmodule Maverick.ResponseTest do
   end
 
   test "a raw map is json encoded with success response", ctx do
-    response = Maverick.Response.handle(%{one: 1}, ctx.conn)
-               |> json_response(200)
+    response =
+      Maverick.Response.handle(%{one: 1}, ctx.conn)
+      |> json_response(200)
 
     assert %{"one" => 1} == response
   end
 
   test "a raw string is json encoded with success response", ctx do
-    response = Maverick.Response.handle("hello world", ctx.conn)
-               |> json_response(200)
+    response =
+      Maverick.Response.handle("hello world", ctx.conn)
+      |> json_response(200)
 
     assert "hello world" == response
   end
 
   test "an ok tuple with json encode the term with success response", ctx do
-    response = Maverick.Response.handle({:ok, %{one: 1}}, ctx.conn)
-               |> json_response(200)
+    response =
+      Maverick.Response.handle({:ok, %{one: 1}}, ctx.conn)
+      |> json_response(200)
 
     assert %{"one" => 1} == response
   end
@@ -41,16 +44,19 @@ defmodule Maverick.ResponseTest do
   end
 
   test "a error tuple json encodes reason with error response", ctx do
-    response = Maverick.Response.handle({:error, "bad stuff"}, ctx.conn)
-               |> json_response(403)
+    response =
+      Maverick.Response.handle({:error, "bad stuff"}, ctx.conn)
+      |> json_response(403)
 
     assert %{"error_code" => 403, "error_message" => "bad stuff"} == response
   end
 
   test "an error exception tuple triggers Maverick.Exception protocol", ctx do
     exception = ArgumentError.exception(message: "argument is bad")
-    response = Maverick.Response.handle({:error, exception}, ctx.conn)
-               |> json_response(500)
+
+    response =
+      Maverick.Response.handle({:error, exception}, ctx.conn)
+      |> json_response(500)
 
     assert %{"error_code" => 500, "error_message" => "argument is bad"} == response
   end
