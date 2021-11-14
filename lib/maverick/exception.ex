@@ -17,7 +17,7 @@ defmodule Maverick.Exception.Default do
           |> Jason.encode!()
 
         conn
-        |> Plug.Conn.put_resp_content_type("application/json", nil)
+        |> Plug.Conn.put_resp_content_type("application/json")
         |> Plug.Conn.send_resp(status, response)
       end
 
