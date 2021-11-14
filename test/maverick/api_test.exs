@@ -1,5 +1,7 @@
 defmodule Maverick.ApiTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+
+  import Maverick.Test.Helpers
 
   @host "http://localhost:4000"
 
@@ -94,12 +96,22 @@ defmodule Maverick.ApiTest do
 
   defp resp_headers({:ok, _status_code, headers, _ref}), do: headers
 
+  defp resp_header({:ok, _, headers, _}, key) do
+    Enum.find(headers, fn {k, _} -> k == key end)
+  end
+
   defp resp_body({:ok, _status_code, _headers, ref}) do
     {:ok, body} = :hackney.body(ref)
     Jason.decode!(body)
   end
 
   defp resp_content_type(resp) do
-    {"content-type", "application/json"} in resp_headers(resp)
+    case resp_header(resp, "content-type") do
+      nil ->
+        flunk("Content-type is not set")
+
+      {_, content_type} ->
+        assert response_content_type?(content_type, :json)
+    end
   end
 end

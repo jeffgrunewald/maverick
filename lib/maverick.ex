@@ -28,12 +28,7 @@ defmodule Maverick do
         arg = Maverick.Api.Generator.decode_arg_type(conn, route.args)
         response = apply(__MODULE__, route.function, [arg])
 
-        Maverick.Api.Generator.wrap_response(
-          conn,
-          response,
-          route.success_code,
-          route.error_code
-        )
+        Maverick.handle_response(response, conn)
       end
     end
   end
@@ -100,6 +95,15 @@ defmodule Maverick do
     |> Module.create(contents, Macro.Env.location(__ENV__))
 
     []
+  end
+
+  def handle_response(%Plug.Conn{} = conn, _) do
+    conn
+  end
+
+  def handle_response(term, conn) do
+    response = Maverick.Response.handle(term, conn)
+    handle_response(response, conn)
   end
 
   defp parse_http_code(code) when is_integer(code), do: code

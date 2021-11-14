@@ -1,6 +1,8 @@
 defmodule Maverick.ExceptionTest do
   use ExUnit.Case
 
+  import Maverick.Test.Helpers
+
   @host "http://localhost:4000"
   @headers [{"content-type", "application/json"}]
 
@@ -52,7 +54,9 @@ defmodule Maverick.ExceptionTest do
 
   defp resp_code({:ok, status_code, _headers, _ref}), do: status_code
 
-  defp resp_headers({:ok, _status_code, headers, _ref}), do: headers
+  defp resp_header({:ok, _, headers, _}, key) do
+    Enum.find(headers, fn {k, _} -> k == key end)
+  end
 
   defp resp_body({:ok, _status_code, _headers, ref}) do
     {:ok, body} = :hackney.body(ref)
@@ -60,6 +64,12 @@ defmodule Maverick.ExceptionTest do
   end
 
   defp resp_content_type(resp) do
-    {"content-type", "application/json"} in resp_headers(resp)
+    case resp_header(resp, "content-type") do
+      nil ->
+        flunk("Content-type is not set")
+
+      {_, content_type} ->
+        assert response_content_type?(content_type, :json)
+    end
   end
 end
