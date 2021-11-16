@@ -18,5 +18,4 @@ defmodule Maverick.Arguments do
   defp arg(conn, parameter) do
     get_in(conn.params, List.wrap(parameter))
   end
-
 end

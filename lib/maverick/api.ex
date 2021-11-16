@@ -63,7 +63,9 @@ defmodule Maverick.Api do
 
       def list_modules do
         case @modules do
-          [] -> :application.get_key(@otp_app, :modules)
+          [] ->
+            :application.get_key(@otp_app, :modules)
+
           modules ->
             routers = Enum.map(modules, &Module.concat(&1, Maverick.Router))
             {:ok, routers}
