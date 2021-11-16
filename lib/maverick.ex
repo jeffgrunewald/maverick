@@ -25,8 +25,8 @@ defmodule Maverick do
 
       def call(%Plug.Conn{private: %{maverick_route: route}} = conn, _opts) do
         conn = super(conn, route)
-        arg = Maverick.Api.Generator.decode_arg_type(conn, route.args)
-        response = apply(__MODULE__, route.function, [arg])
+        args = Maverick.Arguments.get(route, conn)
+        response = apply(__MODULE__, route.function, args)
 
         Maverick.handle_response(response, conn)
       end
@@ -39,7 +39,7 @@ defmodule Maverick do
     unless route_info == :no_route do
       scope = Module.get_attribute(module, :maverick_route_scope)
       path = Keyword.fetch!(route_info, :path)
-      arg_type = Keyword.get(route_info, :args, :params) |> validate_arg_type()
+      args = Keyword.get(route_info, :args, [:params]) |> Maverick.Arguments.validate()
       success_code = Keyword.get(route_info, :success, 200) |> parse_http_code()
       error_code = Keyword.get(route_info, :error, 404) |> parse_http_code()
 
@@ -59,7 +59,7 @@ defmodule Maverick do
       Module.put_attribute(module, :maverick_routes, %Maverick.Route{
         module: module,
         function: name,
-        args: arg_type,
+        args: args,
         method: method,
         path: path,
         raw_path: raw_path,
@@ -112,10 +112,4 @@ defmodule Maverick do
     {code, _} = Integer.parse(code)
     code
   end
-
-  defp validate_arg_type({:required_params, list}),
-    do: {:required_params, Enum.map(list, &to_string/1)}
-
-  defp validate_arg_type(:params), do: :params
-  defp validate_arg_type(:conn), do: :conn
 end

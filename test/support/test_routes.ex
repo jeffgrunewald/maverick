@@ -1,7 +1,7 @@
 defmodule Maverick.TestRoute1 do
   use Maverick, scope: "/route1"
 
-  @route path: "multiply", args: {:required_params, [:num1, :num2]}, error: 403
+  @route path: "multiply", args: [:params], error: 403
   def multiply(%{"num1" => num1, "num2" => num2}) do
     case num1 * num2 do
       50 -> {:error, "illegal operation"}
@@ -49,7 +49,7 @@ end
 defmodule Maverick.TestRoute2 do
   use Maverick, scope: "/route2"
 
-  @route path: "fly/me/to/the", args: :conn
+  @route path: "fly/me/to/the", args: [:conn]
   def come_fly_with_me(conn) do
     destination = Enum.random(["moon", "mars", "stars"])
 

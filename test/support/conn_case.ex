@@ -3,14 +3,12 @@ defmodule Maverick.ConnCase do
 
   using do
     quote do
-      import Maverick.Test.Helpers
+      import Maverick.Test.ConnHelpers
     end
   end
 end
 
-defmodule Maverick.Test.Helpers do
-  require ExUnit.Assertions
-
+defmodule Maverick.Test.ConnHelpers do
   def response(%Plug.Conn{status: status, resp_body: body}, given) do
     given = Plug.Conn.Status.code(given)
 
