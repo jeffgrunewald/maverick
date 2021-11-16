@@ -8,7 +8,7 @@ defmodule MaverickTest do
              method: "POST",
              path: ["route1", "multiply"],
              raw_path: "/route1/multiply",
-             args: {:required_params, ["num1", "num2"]},
+             args: [:params],
              error_code: 403,
              success_code: 200
            } in Maverick.TestRoute1.Maverick.Router.routes()
@@ -19,7 +19,7 @@ defmodule MaverickTest do
              method: "GET",
              path: ["route1", "hello", {:variable, "name"}],
              raw_path: "/route1/hello/:name",
-             args: :params,
+             args: [:params],
              error_code: 404,
              success_code: 200
            } in Maverick.TestRoute1.Maverick.Router.routes()
@@ -30,7 +30,7 @@ defmodule MaverickTest do
              method: "POST",
              path: ["route2", "fly", "me", "to", "the"],
              raw_path: "/route2/fly/me/to/the",
-             args: :conn,
+             args: [:conn],
              error_code: 404,
              success_code: 200
            } in Maverick.TestRoute2.Maverick.Router.routes()
@@ -41,7 +41,7 @@ defmodule MaverickTest do
              method: "PUT",
              path: ["route2", "clock", "now"],
              raw_path: "/route2/clock/now",
-             args: :params,
+             args: [:params],
              error_code: 404,
              success_code: 200
            } in Maverick.TestRoute2.Maverick.Router.routes()

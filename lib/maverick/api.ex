@@ -47,6 +47,7 @@ defmodule Maverick.Api do
       @otp_app Keyword.fetch!(opts, :otp_app)
       @root_scope opts |> Keyword.get(:root_scope, "/")
       @router Module.concat(__MODULE__, Router)
+      @modules opts |> Keyword.get(:modules, [])
 
       def child_spec(opts) do
         %{
@@ -60,7 +61,18 @@ defmodule Maverick.Api do
         Maverick.Api.Supervisor.start_link(__MODULE__, opts)
       end
 
-      def list_routes(), do: Maverick.Route.list_routes(@otp_app, @root_scope)
+      def list_modules do
+        case @modules do
+          [] ->
+            :application.get_key(@otp_app, :modules)
+
+          modules ->
+            routers = Enum.map(modules, &Module.concat(&1, Maverick.Router))
+            {:ok, routers}
+        end
+      end
+
+      def list_routes(), do: Maverick.Route.list_routes(__MODULE__, @root_scope)
 
       def router() do
         @router

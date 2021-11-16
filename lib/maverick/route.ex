@@ -38,10 +38,9 @@ defmodule Maverick.Route do
   Takes an OTP app name and a root scope and returns a
   list of all routes the app defines as %__MODULE__ structs.
   """
-  @spec list_routes(Maverick.otp_app(), Maverick.root_scope()) :: [t()]
-  def list_routes(otp_app, root_scope) do
-    otp_app
-    |> :application.get_key(:modules)
+  @spec list_routes(Maverick.api(), Maverick.root_scope()) :: [t()]
+  def list_routes(api, root_scope) do
+    api.list_modules()
     |> filter_router_modules()
     |> collect_route_info()
     |> prepend_root_scope(root_scope)

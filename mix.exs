@@ -36,6 +36,7 @@ defmodule Maverick.MixProject do
       {:nimble_parsec, "~> 1.1", optional: true},
       {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
       {:hackney, "~> 1.17", only: :test},
+      {:finch, "~> 0.9.1", only: :test},
       {:plug_cowboy, "~> 2.5", only: :test},
       {:ex_doc, "~> 0.25", only: :dev, runtime: false}
     ]
