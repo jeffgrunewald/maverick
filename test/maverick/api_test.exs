@@ -3,9 +3,6 @@ defmodule Maverick.ApiTest do
   use SetupFinch
   use SetupServer
 
-  import Maverick.Test.Helpers
-
-
   @headers [{"content-type", "application/json"}]
 
   describe "serves the handled routes" do
@@ -48,8 +45,7 @@ defmodule Maverick.ApiTest do
       %{"destination" => destination} = resp |> resp_body()
 
       assert 200 == resp_code(resp)
-      assert resp_content_type(resp)
-      assert {"space-rocket", "brrr"} in resp_headers(resp)
+      assert {"space-rocket", "BRRR"} in resp_headers(resp)
       assert destination in ["moon", "mars", "stars"]
     end
 
@@ -123,12 +119,6 @@ defmodule Maverick.ApiTest do
   defp resp_body(%Finch.Response{body: body}), do: Jason.decode!(body)
 
   defp resp_content_type(resp) do
-    case resp_header(resp, "content-type") do
-      nil ->
-        flunk("Content-type is not set")
-
-      {_, content_type} ->
-        assert response_content_type?(content_type, :json)
-    end
+    {"content-type", "application/json; charset=utf-8"} in resp_headers(resp)
   end
 end

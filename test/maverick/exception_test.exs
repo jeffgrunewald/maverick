@@ -3,8 +3,6 @@ defmodule Maverick.ExceptionTest do
   use SetupFinch
   use SetupServer
 
-  import Maverick.Test.Helpers
-
   @headers [{"content-type", "application/json"}]
 
   setup_all :http_server
@@ -68,12 +66,6 @@ defmodule Maverick.ExceptionTest do
   defp resp_body(%Finch.Response{body: body}), do: Jason.decode!(body)
 
   defp resp_content_type(resp) do
-    case resp_header(resp, "content-type") do
-      nil ->
-        flunk("Content-type is not set")
-
-      {_, content_type} ->
-        assert response_content_type?(content_type, :json)
-    end
+    {"content-type", "application/json; charset=utf-8"} in resp_headers(resp)
   end
 end

@@ -56,7 +56,7 @@ defmodule Maverick.TestRoute2 do
     response_header =
       conn.req_headers
       |> Map.new()
-      |> Map.update("Space-Rocket", "BLASTOFF", fn val -> String.upcase(val) end)
+      |> Map.update("space-rocket", "BLASTOFF", fn val -> String.upcase(val) end)
 
     {:ok, response_header, %{"destination" => destination}}
   end
