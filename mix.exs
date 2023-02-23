@@ -2,7 +2,7 @@ defmodule Maverick.MixProject do
   use Mix.Project
 
   @name "Maverick"
-  @version "0.2.0"
+  @version "0.3.0"
   @repo "https://github.com/jeffgrunewald/maverick"
 
   def project do
@@ -37,7 +37,6 @@ defmodule Maverick.MixProject do
       {:dialyxir, "~> 1.2", only: :dev, runtime: false},
       {:finch, "~> 0.14", only: :test},
       {:bandit, "~> 0.6", only: :test},
-      {:plug_cowboy, "~> 2.6", only: :test},
       {:ex_doc, "~> 0.29", only: :dev, runtime: false}
     ]
   end
