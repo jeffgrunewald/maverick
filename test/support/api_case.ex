@@ -68,7 +68,7 @@ defmodule Maverick.Api.Helpers do
       |> Bandit.child_spec()
       |> start_supervised()
 
-    {:ok, port} = ThousandIsland.local_port(server)
+    {:ok, %{port: port}} = ThousandIsland.listener_info(server)
     [host: "#{type}://localhost:#{port}", port: port]
   end
 
