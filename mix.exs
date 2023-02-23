@@ -2,7 +2,7 @@ defmodule Maverick.MixProject do
   use Mix.Project
 
   @name "Maverick"
-  @version "0.2.0"
+  @version "0.3.0"
   @repo "https://github.com/jeffgrunewald/maverick"
 
   def project do
@@ -10,7 +10,7 @@ defmodule Maverick.MixProject do
       app: :maverick,
       name: @name,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.12",
       description: "Web API framework with a need for speed",
       homepage_url: @repo,
       source_url: @repo,
@@ -31,13 +31,13 @@ defmodule Maverick.MixProject do
 
   defp deps do
     [
-      {:plug, "~> 1.12"},
-      {:jason, "~> 1.2"},
-      {:nimble_parsec, "~> 1.1", optional: true},
-      {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
-      {:hackney, "~> 1.17", only: :test},
-      {:plug_cowboy, "~> 2.5", only: :test},
-      {:ex_doc, "~> 0.25", only: :dev, runtime: false}
+      {:plug, "~> 1.14"},
+      {:jason, "~> 1.4"},
+      {:nimble_parsec, "~> 1.2", optional: true},
+      {:dialyxir, "~> 1.2", only: :dev, runtime: false},
+      {:finch, "~> 0.14", only: :test},
+      {:bandit, "~> 0.6", only: :test},
+      {:ex_doc, "~> 0.29", only: :dev, runtime: false}
     ]
   end
 

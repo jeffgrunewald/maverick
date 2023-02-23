@@ -1,56 +1,50 @@
 defmodule Maverick.ApiTest do
   use ExUnit.Case, async: true
-
-  import Maverick.Test.Helpers
-
-  @host "http://localhost:4000"
+  use Maverick.ApiCase
 
   @headers [{"content-type", "application/json"}]
 
   describe "serves the handled routes" do
-    setup do
-      start_supervised!(
-        {Plug.Cowboy, scheme: :http, plug: Maverick.TestApi, options: [port: 4000]}
-      )
+    setup :http1_client
+    setup :http_server
 
-      :ok
-    end
-
-    test "GET request with empty body" do
-      resp = :hackney.get("#{@host}/api/v1/route1/hello/steve")
+    test "GET request with empty body", ctx do
+      {:ok, resp} = req(ctx.client, :get, "#{ctx.host}/api/v1/route1/hello/steve")
 
       assert 200 == resp_code(resp)
       assert resp_content_type(resp)
       assert "Hi there steve" == resp_body(resp)
     end
 
-    test "POST request with custom error code" do
+    test "POST request with custom error code", ctx do
       body = %{num1: 2, num2: 3} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/route1/multiply", @headers, body)
+
+      {:ok, resp} = req(ctx.client, :post, "#{ctx.host}/api/v1/route1/multiply", @headers, body)
 
       assert 200 == resp_code(resp)
       assert resp_content_type(resp)
       assert %{"product" => 6} == resp_body(resp)
     end
 
-    test "POST request that handles the complete Request struct" do
-      resp =
-        :hackney.post(
-          "#{@host}/api/v1/route2/fly/me/to/the",
-          @headers ++ [{"space-rocket", "brrr"}],
-          ""
+    test "POST request that handles the complete Request struct", ctx do
+      {:ok, resp} =
+        req(
+          ctx.client,
+          :post,
+          "#{ctx.host}/api/v1/route2/fly/me/to/the",
+          @headers ++ [{"space-rocket", "brrr"}]
         )
 
       %{"destination" => destination} = resp |> resp_body()
 
       assert 200 == resp_code(resp)
-      assert resp_content_type(resp)
-      assert {"space-rocket", "brrr"} in resp_headers(resp)
+      assert {"space-rocket", "BRRR"} in resp_headers(resp)
       assert destination in ["moon", "mars", "stars"]
     end
 
-    test "PUT requests with query params" do
-      resp = :hackney.put("#{@host}/api/v1/route2/clock/now?timezone=Etc/UTC", @headers)
+    test "PUT requests with query params", ctx do
+      {:ok, resp} =
+        req(ctx.client, :put, "#{ctx.host}/api/v1/route2/clock/now?timezone=Etc/UTC", @headers)
 
       {:ok, %DateTime{} = time, _} = resp |> resp_body() |> DateTime.from_iso8601()
 
@@ -61,30 +55,24 @@ defmodule Maverick.ApiTest do
   end
 
   describe "supplies error results" do
-    setup do
-      start_supervised!(
-        {Plug.Cowboy, scheme: :http, plug: Maverick.TestApi, options: [port: 4000]}
-      )
+    setup :http1_client
+    setup :http_server
 
-      :ok
-    end
+    test "handles unexpected routes", ctx do
+      body = %{"magic_word" => "please"} |> Jason.encode!()
 
-    test "handles unexpected routes" do
-      resp =
-        :hackney.post(
-          "#{@host}/api/v1/route1/gimme/that/data",
-          @headers,
-          %{"magic_word" => "please"} |> Jason.encode!()
-        )
+      {:ok, resp} =
+        req(ctx.client, :post, "#{ctx.host}/api/v1/route1/gimme/that/data", @headers, body)
 
       assert 404 == resp_code(resp)
       assert resp_content_type(resp)
       assert %{"error_code" => 404, "error_message" => "Not Found"} == resp_body(resp)
     end
 
-    test "handles error tuples from internal functions" do
+    test "handles error tuples from internal functions", ctx do
       body = %{num1: 25, num2: 2} |> Jason.encode!()
-      resp = :hackney.post("#{@host}/api/v1/route1/multiply", @headers, body)
+
+      {:ok, resp} = req(ctx.client, :post, "#{ctx.host}/api/v1/route1/multiply", @headers, body)
 
       assert 403 == resp_code(resp)
       assert resp_content_type(resp)
@@ -92,26 +80,18 @@ defmodule Maverick.ApiTest do
     end
   end
 
-  defp resp_code({:ok, status_code, _headers, _ref}), do: status_code
+  describe "ssl" do
+    setup :http1_client
+    setup :https_server
 
-  defp resp_headers({:ok, _status_code, headers, _ref}), do: headers
+    test "handles secured connections", ctx do
+      body = %{num1: 4, num2: 4} |> Jason.encode!()
 
-  defp resp_header({:ok, _, headers, _}, key) do
-    Enum.find(headers, fn {k, _} -> k == key end)
-  end
+      {:ok, resp} = req(ctx.client, :post, "#{ctx.host}/api/v1/route1/multiply", @headers, body)
 
-  defp resp_body({:ok, _status_code, _headers, ref}) do
-    {:ok, body} = :hackney.body(ref)
-    Jason.decode!(body)
-  end
-
-  defp resp_content_type(resp) do
-    case resp_header(resp, "content-type") do
-      nil ->
-        flunk("Content-type is not set")
-
-      {_, content_type} ->
-        assert response_content_type?(content_type, :json)
+      assert 200 == resp_code(resp)
+      assert resp_content_type(resp)
+      assert %{"product" => 16} == resp_body(resp)
     end
   end
 end

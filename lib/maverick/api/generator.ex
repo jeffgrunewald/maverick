@@ -24,7 +24,7 @@ defmodule Maverick.Api.Generator do
             |> Jason.encode!()
 
           var!(conn)
-          |> put_resp_content_type("application/json", nil)
+          |> put_resp_content_type("application/json")
           |> send_resp(404, response)
         end
       end
